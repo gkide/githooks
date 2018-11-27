@@ -1,0 +1,7 @@
+- [Commitizen](https://github.com/commitizen)
+- [Conventional Commits](https://github.com/conventional-commits)
+- [Linus about git commit](https://github.com/torvalds/linux/pull/17#issuecomment-5659933)
+- [Git Commit Messages: 50/72 Formatting](https://stackoverflow.com/questions/2290016/git-commit-messages-50-72-formatting)
+- [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit)
+- [Commit Message & ChangeLog](http://www.ruanyifeng.com/blog/2016/01/commit_message_change_log.html)
+- [Git Commit Message 和工作流规范](https://cloud.tencent.com/developer/article/1004656)
