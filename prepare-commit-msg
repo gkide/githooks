@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# An hook script to prepare the commit log message.
+# Called by "git commit" with the name of the file that has the
+# commit message, followed by the description of the commit
+# message's source. The hook's purpose is to edit the commit
+# message file. If the hook fails with a non-zero status,
+# the commit is aborted.
+#
+# To enable this hook, rename this file to "prepare-commit-msg".
+# see $ man githooks for more details
+
+# The project source directory, abs path
+GIT_REPO_DIR="$(cd ${PWD} && pwd)"
+
+# The policy directory, abs path
+POLICY_DIR="${GIT_REPO_DIR}/scripts/githooks/policy"
+source "${POLICY_DIR}/utils.sh"
+
+SHA1=$3
+COMMIT_SOURCE=$2
+COMMIT_MSG_FILE=$1
+
+# Add a Signed-off-by line to the message
+# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
+# hook is more suited to it.
+#
+# Do not do it here, use -s/-S instead
+#
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+
+# Removes the "# Please enter the commit message..." help message.
+/usr/bin/perl -i.bak -ne 'print unless(m/^. Please enter the commit message/..m/^#$/)' "${COMMIT_MSG_FILE}"
+
+case "$COMMIT_SOURCE,$SHA1" in
+    merge,)
+        # Comments out the "Conflicts:" part of a merge commit.
+        /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "${COMMIT_MSG_FILE}"
+        ;;
+
+    commit,*)
+        # git commit --amend
+        # echo "do not $(msg_red amend) pushed commit."
+        ;;
+
+    message,*)
+        ${POLICY_DIR}/check-msg-fmt.sh "${COMMIT_MSG_FILE}"
+        if [ ! $? -eq 0 ] ; then
+            echo "$(msg_red amend): do not meet commit message policy."
+            exit 1
+        fi
+        ;;
+
+    template,)
+        # git commit
+        # echo "$(msg_red template): fill template commit message"
+        # exit 1
+        ;;
+
+    *)
+        ;;
+esac
+
+# all pass continue
+exit
+
+# for debug
+echo "[GitHookDebug] prepare-commit-msg => pass"
+exit 1

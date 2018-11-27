@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+#
+# An hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments. The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+# Before Git invokes a hook, it changes its working directory to either the
+# root of the working tree in a non-bare repository, or to the `$GIT_DIR` in a
+# bare repository.
+#
+# printf "Work Directory: %s\n" $(pwd)
+# set | egrep GIT
+
+# The pre-commit hook is run first, before you even type in a commit message.
+# If exiting non-zero from this hook aborts the commit, although you can
+# bypass it with 'git commit --no-verify'.
+
+# It’s used to inspect the snapshot that’s about to be committed
+# - to see if you’ve forgotten something
+# - to make sure tests run
+# - to check for code style, run lint or something equivalent
+# - to check for trailing whitespace (the default hook does exactly this)
+# - to check for appropriate documentation on new methods
+# - to examine whatever you need to inspect in the code
+
+# If error, it may be the difference between 'bash' & 'dash'
+# - $ ls -al $(which sh)
+# - $ ls -al $(which bash)
+# - $ ls -al $(which dash)
+
+# The project source directory, abs path
+GIT_REPO_DIR="$(cd ${PWD} && pwd)"
+
+# The policy directory, abs path
+POLICY_DIR="${GIT_REPO_DIR}/scripts/githooks/policy"
+source "${POLICY_DIR}/utils.sh"
+
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+    against=HEAD
+else
+    # Initial commit: diff against an empty tree object
+    against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
+if [ "${against}" != "HEAD" ]; then
+    echo -e "$(msg_red HEAD) is detached, do not commit."
+    exit 1
+fi
+
+# check non-ASCII filenames & whitespace errors
+${POLICY_DIR}/check-filename.sh
+if [ ! $? -eq 0 ] ; then exit 1; fi
+
+# check the changed files contents
+${POLICY_DIR}/check-filecontents.sh
+if [ ! $? -eq 0 ] ; then exit 1; fi
+
+# try to auto remove trailing whitespace
+${POLICY_DIR}/fix-trailing-whitespace.sh
+# If there are whitespace errors, print the offending file names and fail.
+# Check for introduced trailing whitespace or an indent that uses a space
+# before a tab.
+exec git diff-index --check --cached HEAD --
+
+# all pass continue or stop
+exit $?
+
+# debug usage
+echo "[GitHookDebug] pre-commit => pass"
+exit 1

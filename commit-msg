@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#
+# An hook script to check the commit log message.
+# Called by "git commit" with one argument, the name of the file
+# that has the commit message. The hook should exit with non-zero
+# status after issuing an appropriate message if it wants to stop the
+# commit. The hook is allowed to edit the commit message file.
+#
+# - To enable this hook, rename this file to "commit-msg".
+
+# The file that has the commit message
+COMMIT_MSG_FILE="$1"
+
+# The project source directory, abs path
+GIT_REPO_DIR="$(cd ${PWD} && pwd)"
+
+# The policy directory, abs path
+POLICY_DIR="${GIT_REPO_DIR}/scripts/githooks/policy"
+source "${POLICY_DIR}/utils.sh"
+
+function backup_msg_exit()
+{
+    local msg=$(cat ${COMMIT_MSG_FILE})
+
+    if [ -z "${msg}" ] ; then
+        exit 1
+    fi
+
+    local tmp_dir="${GIT_REPO_DIR}/todo"
+    local tmp_msg_file="${tmp_dir}/commit-msg.cache"
+
+    if [ ! -d "${tmp_dir}" ]; then mkdir "${tmp_dir}"; fi
+    cat "${COMMIT_MSG_FILE}" >> ${tmp_msg_file}
+
+    local usr_msg=$(grep "^[^#]" "${tmp_msg_file}")
+
+    if [ "${usr_msg}" != "" ]; then
+        echo "${usr_msg}" > ${tmp_msg_file}
+    fi
+
+    local head_1_msg=$(head -n1 ${tmp_msg_file})
+    local tail_1_msg=$(tail -n1 ${tmp_msg_file})
+
+    if [ "${head_1_msg}" = "${tail_1_msg}" ]; then
+        usr_msg=$(grep "^Signed-off-by: .*" "${tmp_msg_file}")
+
+        # check if we forget signed-off-by, but input commit message, keep it
+        if [ "${usr_msg}" != "" ]; then
+            # only signed off line, just remove it
+            rm ${tmp_msg_file}
+            exit 1
+        fi
+    fi
+
+    echo "Cached commit message: $(msg_brown ${tmp_msg_file})"
+    exit 1
+}
+
+# check the signed off
+${POLICY_DIR}/check-signed-off-by.sh "${COMMIT_MSG_FILE}"
+if [ ! $? -eq 0 ] ; then backup_msg_exit; fi
+
+# check the commit message format
+${POLICY_DIR}/check-msg-fmt.sh "${COMMIT_MSG_FILE}"
+if [ ! $? -eq 0 ] ; then backup_msg_exit; fi
+
+# check the commit message spell
+#${POLICY_DIR}/check-spell.sh $1
+#if [ ! $? -eq 0 ] ; then backup_msg_exit; fi
+
+# all pass continue
+exit
+
+# debug usage
+echo "[GitHookDebug] commit-msg => pass"
+exit 1

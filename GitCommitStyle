@@ -1,0 +1,23 @@
+
+# ------------------------------------------------------------------------------
+# <type>(<scope>): <subject>
+# <HERE-SHOULD-BE-ONE-BLANK-LINE>
+# <Optional-body>
+# <HERE-SHOULD-BE-ONE-BLANK-LINE>
+# <Optional-footer>
+# ------------------------------------------------------------------------------
+# ci            CI configuration changes
+# fix           A bug fix
+# docs          Documentation changes
+# test          Adding new or correcting existing tests
+# build         Changes that do affect the build system
+# style         Changes that do not affect the code meaning
+# feature       Introduce or modify the codebase features
+# performance   Code changes that improves the performance
+# chore         Other changes that don't modify src or test files
+# revert        Revert a previous commit
+# refactor      Changes that neither fixes a bug nor adds a feature
+#
+# [BREAKING]: short description for the breaking changes
+# [CLOSE(ISSUE)]: short description contains the issue reference
+# ------------------------------------------------------------------------------
