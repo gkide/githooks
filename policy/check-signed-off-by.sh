@@ -29,7 +29,7 @@ case "${1}" in
     * )
         # Skip checking, just return
         if ${SKIP_CHECKING}; then
-            return 0
+            exit 0
         fi
     
         signingkey=$(git config --get user.signingkey)
