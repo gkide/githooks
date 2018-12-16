@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-GIT_REPO_DIR="$(cd ${PWD} && pwd)"
-POLICY_DIR="${GIT_REPO_DIR}/scripts/githooks/policy"
-source "${POLICY_DIR}/utils.sh"
+THIS_DIR=$(cd $(dirname $0); pwd)
+source "${THIS_DIR}/utils.sh"
 
 function check_spell()
 {

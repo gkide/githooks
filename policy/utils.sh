@@ -43,7 +43,6 @@ function usage_example_1()
     fi
 }
 
-
 # man console_codes
 
 function msg_red()

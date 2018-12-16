@@ -32,10 +32,11 @@
 # - $ ls -al $(which dash)
 
 # The project source directory, abs path
-GIT_REPO_DIR="$(cd ${PWD} && pwd)"
+GIT_REPO_DIR="$(git rev-parse --show-toplevel)"
 
 # The policy directory, abs path
-POLICY_DIR="${GIT_REPO_DIR}/scripts/githooks/policy"
+THIS_DIR=$(cd $(dirname $0); pwd)
+POLICY_DIR="${THIS_DIR}/policy"
 source "${POLICY_DIR}/utils.sh"
 
 if git rev-parse --verify HEAD >/dev/null 2>&1; then

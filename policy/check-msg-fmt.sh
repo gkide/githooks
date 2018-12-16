@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-msg=$(cat "${1}")
+GIT_REPO_DIR="$(git rev-parse --show-toplevel)"
 
-# https://github.com/conventional-changelog/validate-commit-msg
-# node.js project, to validate commit message
-validate-commit-msg ${msg}
+# https://www.npmjs.com/package/@gkide/standard-release
+standard-release -x -m "${GIT_REPO_DIR}/${1}"
 
 exit $?

@@ -11,10 +11,11 @@
 # see $ man githooks for more details
 
 # The project source directory, abs path
-GIT_REPO_DIR="$(cd ${PWD} && pwd)"
+GIT_REPO_DIR="$(git rev-parse --show-toplevel)"
 
 # The policy directory, abs path
-POLICY_DIR="${GIT_REPO_DIR}/scripts/githooks/policy"
+THIS_DIR=$(cd $(dirname $0); pwd)
+POLICY_DIR="${THIS_DIR}/policy"
 source "${POLICY_DIR}/utils.sh"
 
 SHA1=$3

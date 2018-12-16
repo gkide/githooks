@@ -4,9 +4,8 @@
 #
 # A git hook script to find and fix trailing whitespace in your commits.
 
-GIT_REPO_DIR="$(cd ${PWD} && pwd)"
-POLICY_DIR="${GIT_REPO_DIR}/scripts/githooks/policy"
-source "${POLICY_DIR}/utils.sh"
+THIS_DIR=$(cd $(dirname $0); pwd)
+source "${THIS_DIR}/utils.sh"
 
 # change IFS to ignore filename's space in |for|
 IFS="
