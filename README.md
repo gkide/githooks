@@ -18,13 +18,13 @@ Those are the git hooks for local repo use, make it consistent and simple.
 
 # Configurations
 - No mixing **LF** and **CRLF** by using `$ git config core.safecrlf true`
-- Git newer than 2.9.0, conventional(./Conventional.md) checking & git hooks:
+- Git newer than 2.9.0, [conventional](./Conventional.md) checking & git hooks:
   - `$ cd path/to/repo && mkdir scripts && cd scripts`
   - `$ git clone https://github.com/gkide/githooks`
   - `$ cd ..`
   - `$ git config core.hooksPath ${PWD}/scripts/githooks`
   - `$ git config commit.template ${PWD}/scripts/githooks/GitCommitStyle`
-- Git older than 2.9.0, conventional(./Conventional.md) checking & git hooks:
+- Git older than 2.9.0, [conventional](./Conventional.md) checking & git hooks:
   - Clone & copy **githooks** to the `repo/.git/hooks/`
   - `$ git config commit.template path/to/GitCommitStyle`
 
