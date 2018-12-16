@@ -1,12 +1,11 @@
 # Conventional Commits Format
 
 ```
-<type>(scope): <subject>
-
-[Optional Body]
-
-[Optional Footer]
-
+<type>(<scope>): <subject>
+<HERE-SHOULD-BE-ONE-BLANK-LINE>
+<body>
+<HERE-SHOULD-BE-ONE-BLANK-LINE>
+<footer>
 ```
 
 - `<type>` & `<subject>` are expected, others are optional
@@ -14,17 +13,19 @@
 
 ## `<type>` should be one of
 
-- `ci` CI configuration changes
 - `fix` A bug fix
+- `feat` Introduce or modify the codebase features
+- `break` User interface breaking changes
+- `ci` CI configuration changes
 - `docs` Documentation changes
 - `test` Adding new or correcting existing tests
 - `build` Changes that do affect the build system
+- `perf` Code changes that improves the performance
 - `style` Changes that do not affect the code meaning
-- `feature` Introduce or modify the codebase features 
-- `performance` Code changes that improves the performance
 - `chore` Other changes that don't modify src or test files
 - `revert` Revert a previous commit
 - `refactor` Changes that neither fixes a bug nor adds a feature
+- `WIP` Something which is working in process
 
 ## `<scope>` is optional
 
@@ -51,18 +52,48 @@ If any, it should include motivation for the change and following the rules:
 
 ## `<footer>` is optional
 
-If any, it should contain information about the following ones:
+If any, it should be one of the following ones:
 
-- Breaking Changes, the following format:
+- Closed Issues, the format is:
 ```
-[BREAKING]: a short description message for the breaking changes
-    - more details information
+[CLOSE] a short description message for the closed issue
+- more details information
+```
+or
+
+```
+[CLOSE#1] a short description message for the closed issue
+- more details information
+[CLOSE#2] a short description message for the closed issue
+- more details information
 ```
 
-- Issues Reference that this commit closes, the format as following:
+- Known Issue, the format is:
 ```
-[CLOSE(ISSUE)]: a short description message contains the issue reference
-    - more details information
+[KNOWN ISSUE] a short description message for the known issue
+- more details information
+```
+or
+
+```
+[KNOWN ISSUE#1] a short description message for the known issue
+- more details information
+[KNOWN ISSUE#2] a short description message for the known issue
+- more details information
+```
+
+- Breaking Changes, the format is:
+```
+[BREAKING CHANGES] A short description message for the breaking changes
+- more details information
+```
+or
+
+```
+[BREAKING CHANGES#1] A short description message for the breaking changes
+- more details information
+[BREAKING CHANGES#2] A short description message for the breaking changes
+- more details information
 ```
 
 # Reference
