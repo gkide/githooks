@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+# This is the project config settings for using 'release.sh'
+# It should be at project root directory and name as '.release'
+
 # -----------------------
 # Release Version Search
 # -----------------------
-# Project version format should be MAJOR/MINOR/PATCH/TWEAK, 
+# Project version format should be MAJOR/MINOR/PATCH/TWEAK,
 # each line has one, like the following:
 #
 # XXX_VERSION_MAJOR 1 # Can not ignore, must be 0 ~ 9
@@ -13,12 +16,12 @@
 #
 # NOTE:
 # The full version format following semver: https://semver.org/
-# - The basic version number: MAJOR.MINOR.PATCH 
+# - The basic version number: MAJOR.MINOR.PATCH
 # - TWEAK compose of pre-release & build-metadata
 # The following example will result in: 1.2.3-pre+20181221
 #
 # Project version search file, full path
-# The example file see 'version.h' of current directory
+# The example file see 'example.version.h' of current directory
 PVS_FILE="$(git rev-parse --show-toplevel)/build/config/version.h"
 #
 # Project version search prefix for MAJOR
@@ -55,4 +58,3 @@ PUC_CHANGELOG=''
 # The following example will result in the commit message of:
 # chore(release): XXX v1.2.3-pre+20181221
 PRC_RELEASE_MSG='XXX'
-

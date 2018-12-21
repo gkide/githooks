@@ -21,6 +21,7 @@ __THIS_DIR=$(cd $(dirname $0); pwd)
 __PROJECT_DIR="$(git rev-parse --show-toplevel)"
 cd "${__PROJECT_DIR}"
 
+# This is configuration file, see 'example.release' for details
 source ${__PROJECT_DIR}/.release
 
 __sed=$( [ "$(uname)" = Darwin ] && echo 'sed -E' || echo 'sed -re' )
@@ -83,7 +84,7 @@ if [ "$?" != "0" ]; then
 fi
 
 git add "${__CHANGELOG}"
-git commit -m "${__RELEASE_MSG} 
+git commit -m "${__RELEASE_MSG}
 
 More detail changes see: ${__CHANGELOG}"
 
