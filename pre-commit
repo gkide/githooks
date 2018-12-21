@@ -35,20 +35,20 @@
 GIT_REPO_DIR="$(git rev-parse --show-toplevel)"
 
 # The policy directory, abs path
-THIS_DIR=$(cd $(dirname $0); pwd)
+THIS_DIR=$(dirname $0)
 POLICY_DIR="${THIS_DIR}/policy"
 source "${POLICY_DIR}/utils.sh"
 
 if git rev-parse --verify HEAD >/dev/null 2>&1; then
     against=HEAD
 else
-    # Initial commit: diff against an empty tree object
+    # Initial commit, the empty tree sha1
     against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
 fi
 
 if [ "${against}" != "HEAD" ]; then
-    echo -e "$(msg_red HEAD) is detached, do not commit."
-    exit 1
+    # This is init commit
+    exit 0
 fi
 
 # check non-ASCII filenames & whitespace errors

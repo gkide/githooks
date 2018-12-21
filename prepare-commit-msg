@@ -14,7 +14,7 @@
 GIT_REPO_DIR="$(git rev-parse --show-toplevel)"
 
 # The policy directory, abs path
-THIS_DIR=$(cd $(dirname $0); pwd)
+THIS_DIR=$(dirname $0)
 POLICY_DIR="${THIS_DIR}/policy"
 source "${POLICY_DIR}/utils.sh"
 
@@ -46,11 +46,7 @@ case "$COMMIT_SOURCE,$SHA1" in
         ;;
 
     message,*)
-        ${POLICY_DIR}/check-msg-fmt.sh "${COMMIT_MSG_FILE}"
-        if [ ! $? -eq 0 ] ; then
-            echo "$(msg_red amend): do not meet commit message policy."
-            exit 1
-        fi
+        ${POLICY_DIR}/check-msg-fmt.sh "${COMMIT_MSG_FILE}" || exit 1
         ;;
 
     template,)

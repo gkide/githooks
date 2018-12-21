@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-THIS_DIR=$(cd $(dirname $0); pwd)
+THIS_DIR=$(dirname $0)
 source "${THIS_DIR}/utils.sh"
 
 function check_spell()

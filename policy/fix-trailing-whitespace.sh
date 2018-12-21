@@ -4,7 +4,7 @@
 #
 # A git hook script to find and fix trailing whitespace in your commits.
 
-THIS_DIR=$(cd $(dirname $0); pwd)
+THIS_DIR=$(dirname $0)
 source "${THIS_DIR}/utils.sh"
 
 # change IFS to ignore filename's space in |for|

@@ -2,7 +2,7 @@
 #
 # check if we have non-ASCII filenames, if it does then no commit
 
-THIS_DIR=$(cd $(dirname $0); pwd)
+THIS_DIR=$(dirname $0)
 source "${THIS_DIR}/utils.sh"
 
 # If you want to allow non-ASCII filenames set this variable to true.

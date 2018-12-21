@@ -56,5 +56,5 @@ PUC_CHANGELOG=''
 # -----------------------
 # Set release commit message, usually this will be project name
 # The following example will result in the commit message of:
-# chore(release): XXX v1.2.3-pre+20181221
+# chore: release XXX v1.2.3-pre+20181221
 PRC_RELEASE_MSG='XXX'
