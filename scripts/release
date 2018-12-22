@@ -15,7 +15,7 @@ set -u
 set -o pipefail
 
 # The directory which contains current script file
-__THIS_DIR=$(dirname $0)
+__THIS_DIR="$(cd $(dirname $0); pwd; cd - > /dev/null)"
 
 # Change working directory to project root
 __PROJECT_DIR="$(git rev-parse --show-toplevel)"

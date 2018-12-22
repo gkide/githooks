@@ -15,7 +15,7 @@ COMMIT_MSG_FILE="$1"
 GIT_REPO_DIR="$(git rev-parse --show-toplevel)"
 
 # The policy directory, abs path
-THIS_DIR=$(dirname $0)
+THIS_DIR="$(cd $(dirname $0); pwd; cd - > /dev/null)"
 POLICY_DIR="${THIS_DIR}/policy"
 source "${POLICY_DIR}/utils.sh"
 
