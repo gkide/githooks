@@ -1,11 +1,53 @@
 #!/usr/bin/env bash
 
-# Performs steps to tag a release.
-# step No.1: parse project version
-# step No.2: valid project version
-# step No.3: update changelog
-# step No.4: do git commit
-# step No.5: do git tag
+# Semantic Version
+# https://semver.org/
+# Software Release Life Cycle
+# https://en.wikipedia.org/wiki/Software_release_life_cycle
+#
+################################################################
+#                       +----------------MUI--------------+    #
+#  +-ADT-+              |  +--FIX--+                      |    #
+#  |     |              |  |       |                      |    #
+#  v     |              v  v       |                      |    #
+# pre-* ===> alpha ===> beta ===> rc ===> [release] ===> eol   #
+#  ^         |  ^       |  ^       ^          |                #
+#  |         |  |       | MUI     FIX         |                #
+#  +---MUI---+  +--MUI--+  |       |          |                #
+#                          +-------+----------+                #
+#                                                              #
+# - ADT: Analysis, Design, Testing, ...                        #
+# - MUI: Modify User Interfacce, feature changing, fix, ...    #
+# - FIX: Bug fix, performance improvement, compatibility, ...  #
+################################################################
+#
+# - pre-*
+#   Refers to all activities performed before formal testing, like:
+#   requirements analysis, software design, and related inter-testing
+#
+# - alpha
+#   The first phase to begin software testing, normally using of
+#   white-box, black-box or gray-box testing techniques, and may
+#   not contain all of the features that the final version has.
+#   It usually ends with features freeze, indicating that no more
+#   features will be added to the software, known as feature complete.
+#
+# - beta
+#   The second phase just following alpha, generally begins when the
+#   software is feature complete but likely to contain a number of known
+#   or unknown bugs, may have speed or performance issues, crashes or data
+#   loss. The beta stage is focus on usability, for reducing impacts to the
+#   end-users. The beta version is normally formally first release to user.
+#
+# - rc
+#   The release candidate (RC), is the third phase of software development,
+#   with potential to be the final version, which is ready to release unless
+#   significant bugs emerge. In this stage, features are complete and stable,
+#   tested through one or more beta cycles, no entirely new features will be
+#   added. There can still have bug fix, change the documentation and testings.
+#
+# - eol
+#   No longer supported, the release reached the end-of-life.
 
 # Exit the script if any statement returns a non-true return value
 set -e
@@ -14,76 +56,557 @@ set -u
 # Pipe fail if any one of the pipe command failed
 set -o pipefail
 
-# The directory which contains current script file
-__THIS_DIR="$(cd $(dirname $0); pwd; cd - > /dev/null)"
+_sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 
-# Change working directory to project root
-__PROJECT_DIR="$(git rev-parse --show-toplevel)"
-cd "${__PROJECT_DIR}"
+####################################
+# Change working directory to repo #
+####################################
+REPO_DIR=$(git rev-parse --show-toplevel)
+cd "${REPO_DIR}"
 
-# This is configuration file, see 'example.release' for details
-source ${__PROJECT_DIR}/.release
+#####################################
+# Import normal shell function-util #
+# - IS_DEBUG_MODE=true;             #
+# - IS_VERBOSE_MODE=true;           #
+#####################################
+source ${REPO_DIR}/scripts/utils.sh;
+IS_DEBUG_MODE=false;
 
-__sed=$( [ "$(uname)" = Darwin ] && echo 'sed -E' || echo 'sed -re' )
+##########################
+# Release Version Search #
+##########################
+# Version format should be MAJOR/MINOR/PATCH/TWEAK,
+# make sure each line has one, like the following:
+# - The basic version number: MAJOR.MINOR.PATCH
+# - TWEAK is pre-release part, consist of [a-z0-9.-]
+# - Following will result in release tag: v1.2.3-pre
+#
+###########################
+# Example of C/C++ header #
+###########################
+#define XXX_VERSION_MAJOR 1     # Can not ignore, must be 0 ~ 9
+#define XXX_VERSION_MINOR 2     # Can not ignore, must be 0 ~ 9
+#define XXX_VERSION_PATCH 3     # Can not ignore, must be 0 ~ 9
+#define XXX_VERSION_TWEAK "pre" # Can be ignored, consist of [a-z0-9.-]
+#
+# Version search file, full path
+#VS_VFILE_TYPE="C";
+#VS_VFILE="${REPO_DIR}/version.h";
+#VS_MAJOR="#define XXX_VERSION_MAJOR";
+#VS_MINOR="#define XXX_VERSION_MINOR";
+#VS_PATCH="#define XXX_VERSION_PATCH";
+#VS_TWEAK="#define XXX_VERSION_TWEAK";
+#
+#############################
+# Example of CMakeLists.txt #
+#############################
+#set(XXX_VERSION_MAJOR 0)       # Can not ignore, must be 0 ~ 9
+#set(XXX_VERSION_MINOR 0)       # Can not ignore, must be 0 ~ 9
+#set(XXX_VERSION_PATCH 6)       # Can not ignore, must be 0 ~ 9
+#set(XXX_VERSION_TWEAK pre)     # Can be ignored, consist of [a-z0-9.-]
+#
+# Version search file, full path
+VS_VFILE_TYPE="CMake";
+VS_VFILE="${REPO_DIR}/CMakeLists.txt";
+VS_MAJOR="set(XXX_VERSION_MAJOR";
+VS_MINOR="set(XXX_VERSION_MINOR";
+VS_PATCH="set(XXX_VERSION_PATCH";
+VS_TWEAK="set(XXX_VERSION_TWEAK";
 
-# Get the latest annotated tag
-__LAST_TAG=$(git describe --abbrev=0)
-[ -z "${__LAST_TAG}" ] && { echo 'ERROR: no tag found'; exit 1; }
+infoMsg "Working repo $(valMsg ${REPO_DIR})";
+infoMsg "-------------------------------------------------";
+infoMsg "Just Enter with nothing will use default [value]";
+infoMsg "-------------------------------------------------";
 
-__VERSION_MAJOR=$(grep "${PVS_PREFIX_MAJOR}" ${PVS_FILE} \
-    | ${__sed} "s/^${PVS_PREFIX_MAJOR}\s*([0-9]+)\s*${PVS_SUFFIX_MAJOR}/\1/")
+########################
+# Check release branch #
+########################
+CURRENT_BRANCH=$(git status | head -n 1 | awk '{print $3}');
+infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
+read -p "" usrInput;
+[ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
 
-__VERSION_MINOR=$(grep "${PVS_PREFIX_MINOR}" ${PVS_FILE} \
-    | ${__sed} "s/^${PVS_PREFIX_MINOR}\s*([0-9]+)\s*${PVS_SUFFIX_MINOR}/\1/")
+if isNo "${usrInput}"; then
+    errMsg "Release stop.";
+fi
 
-__VERSION_PATCH=$(grep "${PVS_PREFIX_PATCH}" ${PVS_FILE} \
-    | ${__sed} "s/^${PVS_PREFIX_PATCH}\s*([0-9]+)\s*${PVS_SUFFIX_PATCH}/\1/")
+#######################################
+# Search annotated & lightweight tags #
+#######################################
+LATEST_TAG=$(git describe --abbrev=0 --tags);
+[ -z "${LATEST_TAG}" ] && errMsg 'No git tag found';
 
-__VERSION_TWEAK=$(grep "${PVS_PREFIX_TWEAK}" ${PVS_FILE} \
-    | ${__sed} "s/^${PVS_PREFIX_TWEAK}\s*(([\da-z-]+(\.[\da-z-]+)*)?(\+[\da-z-]+(\.[\da-z-]+)*)?)\s*${PVS_SUFFIX_TWEAK}/\1/")
+###############################
+# Software Release Life Cycle #
+###############################
+SRLC_REG="(([a-z]+)(-[a-z]+)*)(\.([0-9]+(\.[0-9]+)*))*";
+SRLC_CAN="pre alpha beta rc eol"; # CAN: Candidates
 
-__VERSION_TWEAK=$(echo ${__VERSION_TWEAK} | sed "s/\'//g")
-__VERSION_TWEAK=$(echo ${__VERSION_TWEAK} | sed "s/\"//g")
+SRLC_HELP="";
+SRLC_FMTA="";
+SRLC_FMTB="";
+SRLC_FMTC="";
+for item in ${SRLC_CAN}; do
+    [ -n "${SRLC_HELP}" ] && SRLC_HELP="${SRLC_HELP}, ";
+    SRLC_HELP="${SRLC_HELP}$(valMsg ${item})";
 
-if [ -z "${__VERSION_TWEAK}" ]; then
-    __VERSION="${__VERSION_MAJOR}.${__VERSION_MINOR}.${__VERSION_PATCH}"
+    [ -n "${SRLC_FMTA}" ] && SRLC_FMTA="${SRLC_FMTA}    ";
+    [ -n "${SRLC_FMTB}" ] && SRLC_FMTB="${SRLC_FMTB}    ";
+    [ -n "${SRLC_FMTC}" ] && SRLC_FMTC="${SRLC_FMTC}    ";
+    if [ "${item}" != "eol" ]; then
+        SRLC_FMTA="${SRLC_FMTA}${item}.123";
+        SRLC_FMTB="${SRLC_FMTB}${item}-foo";
+        SRLC_FMTC="${SRLC_FMTC}${item}-X.1";
+    fi
+done
+
+# The TWEAK example usage
+SRLC_HELP="${SRLC_HELP}
+The TWEAK format as following, like:
+    ${SRLC_FMTA}
+    ${SRLC_FMTB}
+    ${SRLC_FMTC}";
+
+# Escape meta-char for RegExp
+#   (   =>  \(
+# space =>  \s+
+_VS_MAJOR_=$(echo "${VS_MAJOR}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+_VS_MINOR_=$(echo "${VS_MINOR}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+_VS_PATCH_=$(echo "${VS_PATCH}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+_VS_TWEAK_=$(echo "${VS_TWEAK}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+
+# Version RegExp Pattern
+REGEXP_MAJOR="^(${_VS_MAJOR_})\s+\\\"*([0-9]+)\\\"*\s*(.*)$";
+REGEXP_MINOR="^(${_VS_MINOR_})\s+\\\"*([0-9]+)\\\"*\s*(.*)$";
+REGEXP_PATCH="^(${_VS_PATCH_})\s+\\\"*([0-9]+)\\\"*\s*(.*)$";
+REGEXP_TWEAK="^(${_VS_TWEAK_})\s*\\\"*([0-9a-z\.-]+)*\\\"*\s*(.*)$";
+debugMsg "$(keyMsg RegExp Major): [$(valMsg ${REGEXP_MAJOR})]";
+debugMsg "$(keyMsg RegExp Minor): [$(valMsg ${REGEXP_MINOR})]";
+debugMsg "$(keyMsg RegExp Patch): [$(valMsg ${REGEXP_PATCH})]";
+debugMsg "$(keyMsg RegExp Tweak): [$(valMsg ${REGEXP_TWEAK})]";
+
+# Get old semver
+VERSION_MAJOR=$(grep "${VS_MAJOR}" ${VS_VFILE} \
+    | ${_sed} "s/${REGEXP_MAJOR}/\2/");
+VERSION_MINOR=$(grep "${VS_MINOR}" ${VS_VFILE} \
+    | ${_sed} "s/${REGEXP_MINOR}/\2/");
+VERSION_PATCH=$(grep "${VS_PATCH}" ${VS_VFILE} \
+    | ${_sed} "s/${REGEXP_PATCH}/\2/");
+VERSION_TWEAK=$(grep "${VS_TWEAK}" ${VS_VFILE} \
+    | ${_sed} "s/${REGEXP_TWEAK}/\2/");
+
+{ [ -z "${VERSION_MAJOR}" ] || [ -z "{$VERSION_MINOR}" ] || [ -z "${VERSION_PATCH}" ]; } \
+    && errMsg "Get semantic version from $(keyMsg ${VS_VFILE}) failed";
+
+# Save the previous version
+PREV_MAJOR=${VERSION_MAJOR}
+PREV_MINOR=${VERSION_MINOR}
+PREV_PATCH=${VERSION_PATCH}
+PREV_TWEAK=${VERSION_TWEAK}
+
+_major_="$(valMsg ${VERSION_MAJOR})";
+_minor_="$(valMsg ${VERSION_MINOR})";
+_patch_="$(valMsg ${VERSION_PATCH})";
+_tweak_="$(valMsg ${VERSION_TWEAK})";
+infoMsg "-------------------------------------------------";
+infoMsg "Current semantic version
+Major(${_major_})  Minor(${_minor_})  Patch(${_patch_})  Tweak(${_tweak_})";
+
+PREV_TWEAK_TXT="";
+PREV_TWEAK_NUM="";
+[ -n "${VERSION_TWEAK}" ] && {
+    PREV_TWEAK_TXT=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\1/");
+    PREV_TWEAK_NUM=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\5/");
+    IS_TXT=$(echo "${PREV_TWEAK_TXT}" | ${_sed} -n "/^[a-z]+(-[a-z]+)*$/p");
+    IS_NUM=$(echo "${PREV_TWEAK_NUM}" | ${_sed} -n "/^[0-9]+(\.[0-9]+)*$/p");
+    if [ -z "${IS_TXT}" -a -z "${IS_NUM}" ]; then
+        errMsg "$(keyMsg ${VS_VFILE}) tweak shoule be: ${SRLC_HELP}";
+    fi
+    [ -z "${IS_TXT}" ] && PREV_TWEAK_TXT="";
+    [ -z "${IS_NUM}" ] && PREV_TWEAK_NUM="";
+    debugMsg "$(keyMsg Tweak old text): [$(valMsg ${PREV_TWEAK_TXT})]";
+    debugMsg "$(keyMsg Tweak old nums): [$(valMsg ${PREV_TWEAK_NUM})]";
+}
+
+####################################################
+# - Update CHANGELOG.md                            #
+# - Get the next semver base on latest tag of repo #
+#                                                  #
+# SEMVER_TAG is like '1.2.3' or '1.2.3.1'          #
+####################################################
+SEMVER_TAG=$(standard-release -c 2>/dev/null | head -n 1 \
+    | awk -F':' 'gsub(/[ ]/,"",$2) { print $2; }');
+[ -n "${SEMVER_TAG}" ] \
+    || errMsg "Get auto semver failed, try install npm $(keyMsg standard-release)";
+
+# Split auto semver into two parts
+SEMVER_VAL=$(echo "${SEMVER_TAG}" \
+    | awk 'sub(/v/,"",$1) sub(/-/,";",$1) { print $1; }');
+
+AUTO_MMP=$(echo "${SEMVER_VAL}" | awk -F ';' '{ print $1; }');
+debugMsg "$(keyMsg Auto major.minor.patch): [$(valMsg ${AUTO_MMP})]";
+AUTO_MAJOR=$(echo "${AUTO_MMP}" | awk -F '.' '{ print $1; }');
+AUTO_MINOR=$(echo "${AUTO_MMP}" | awk -F '.' '{ print $2; }');
+AUTO_PATCH=$(echo "${AUTO_MMP}" | awk -F '.' '{ print $3; }');
+
+AUTO_TWEAK_TXT="";
+AUTO_TWEAK_NUM="";
+AUTO_PREREL=$(echo "${SEMVER_VAL}" | awk -F ';' '{ print $2; }');
+debugMsg "$(keyMsg Auto pre-release): [$(valMsg ${AUTO_PREREL})]";
+if [ -n "${AUTO_PREREL}" ]; then
+    AUTO_TWEAK_TXT=$(echo "${AUTO_PREREL}" | ${_sed} "s/^${SRLC_REG}$/\1/");
+    AUTO_TWEAK_NUM=$(echo "${AUTO_PREREL}" | ${_sed} "s/^${SRLC_REG}$/\5/");
+    IS_TXT=$(echo "${AUTO_TWEAK_TXT}" | ${_sed} -n "/^[a-z]+(-[a-z]+)*$/p");
+    IS_NUM=$(echo "${AUTO_TWEAK_NUM}" | ${_sed} -n "/^[0-9]+(\.[0-9]+)*$/p");
+    if [ -z "${IS_TXT}" -a -z "${IS_NUM}" ]; then
+            errMsg "Auto git tag $(keyMsg pre-release) should be: ${SRLC_HELP}";
+    fi
+    [ -z "${IS_TXT}" ] && AUTO_TWEAK_TXT="";
+    [ -z "${IS_NUM}" ] && AUTO_TWEAK_NUM="";
+    debugMsg "$(keyMsg Auto tweak text): [$(valMsg ${AUTO_TWEAK_TXT})]";
+    debugMsg "$(keyMsg Auto tweak nums): [$(valMsg ${AUTO_TWEAK_NUM})]";
+fi
+
+_major_="$(valMsg ${AUTO_MAJOR})";
+[ "${PREV_MAJOR}" != "${AUTO_MAJOR}" ] \
+    && _major_="$(msgRed ${AUTO_MAJOR})";
+
+_minor_="$(valMsg ${AUTO_MINOR})";
+[ "${PREV_MINOR}" != "${AUTO_MINOR}" ] \
+    && _minor_="$(msgRed ${AUTO_MINOR})";
+
+_patch_="$(valMsg ${AUTO_PATCH})";
+[ "${PREV_PATCH}" != "${AUTO_PATCH}" ] \
+    && _patch_="$(msgRed ${AUTO_PATCH})";
+
+_tweak_="$(valMsg ${AUTO_PREREL})";
+if [ "${PREV_TWEAK}" != "${AUTO_PREREL}" ]; then
+    _tweak_=""; # clean it
+    if [ -n "${AUTO_TWEAK_TXT}" ]; then
+        _tweak_="$(valMsg ${AUTO_TWEAK_TXT})";
+        [ "${PREV_TWEAK_TXT}" != "${AUTO_TWEAK_TXT}" ] \
+            && _tweak_="$(msgRed ${AUTO_TWEAK_TXT})";
+    fi
+
+    if [ -n "${AUTO_TWEAK_NUM}" ]; then
+        if [ "${PREV_TWEAK_NUM}" != "${AUTO_TWEAK_NUM}" ]; then
+            _tweak_="${_tweak_}$(msgRed .${AUTO_TWEAK_NUM})";
+        else
+            _tweak_="${_tweak_}$(valMsg .${AUTO_TWEAK_NUM})";
+        fi
+    fi
+fi
+
+infoMsg "Next auto semantic version
+Major(${_major_})  Minor(${_minor_})  Patch(${_patch_})  Tweak(${_tweak_})";
+
+AUTO_BUMP_SEMVER=false;
+infoMsg "-------------------------------------------------";
+infoMsgL "Use auto semantic version (y/n) [y]: ";
+read -p "" usrInput;
+[ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
+if isYes "${usrInput}"; then
+    AUTO_BUMP_SEMVER=true;
+    VERSION_MAJOR=${AUTO_MAJOR};
+    VERSION_MINOR=${AUTO_MINOR};
+    VERSION_PATCH=${AUTO_PATCH};
+
+    VERSION_TWEAK=${AUTO_PREREL}; # may be just numbers, no ascii text
+    IS_NUM=$(echo "${VERSION_TWEAK}" | ${_sed} -n "/^[0-9]+(\.[0-9]+)*$/p");
+    [ -n "${IS_NUM}" ] && VERSION_TWEAK="rc.${VERSION_TWEAK}";
+fi
+
+# The final major
+infoMsgL "Major (New Major) [$(valMsg ${VERSION_MAJOR})]: ";
+read -p "" usrInput;
+case "${usrInput}" in
+"")
+    # Just Enter is empty, just use it, no touching
+    ;;
+*)
+    IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
+    [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Major) must be numbers of 0-9.";
+    VERSION_MAJOR="${usrInput}";
+    AUTO_BUMP_SEMVER=true;
+    ;;
+esac
+
+# The final minor
+infoMsgL "Minor (New Minor) [$(valMsg ${VERSION_MINOR})]: ";
+read -p "" usrInput;
+case "${usrInput}" in
+"")
+    # Just Enter is empty, just use it, no touching
+    ;;
+*)
+    IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
+    [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Minor) must be numbers of 0-9.";
+    VERSION_MINOR="${usrInput}";
+    AUTO_BUMP_SEMVER=true;
+    ;;
+esac
+
+# The final patch
+infoMsgL "Patch (New Patch) [$(valMsg ${VERSION_PATCH})]: ";
+read -p "" usrInput;
+case "${usrInput}" in
+"")
+    # Just Enter is empty, just use it, no touching
+    ;;
+*)
+    IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
+    [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Patch) must be numbers of 0-9.";
+    VERSION_PATCH="${usrInput}";
+    AUTO_BUMP_SEMVER=true;
+    ;;
+esac
+
+# The final tweak
+infoMsgL "Tweak (New Tweak or $(keyMsg SKIP)) [$(valMsg ${VERSION_TWEAK})]: ";
+read -p "" usrInput;
+case "${usrInput}" in
+"")
+    # Just Enter is empty, just use it, no touching
+    ;;
+"SKIP")
+    # Tweak skip, empty the value
+    if [ -n "${VERSION_TWEAK}" ]; then
+        # Not auto bump, clean ${VS_VFILE} tweak part only
+        VERSION_TWEAK="";
+        AUTO_BUMP_SEMVER=true;
+    fi
+    ;;
+*)
+    VERSION_TWEAK="${usrInput}";
+    AUTO_BUMP_SEMVER=true; # new tweak value
+    ;;
+esac
+
+VERSION_TWEAK_TXT="";
+VERSION_TWEAK_NUM="";
+
+# Checking tweak if not empty
+[ -n "${VERSION_TWEAK}" ] && {
+    tweakSRLC=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\2/");
+    debugMsg "$(keyMsg Final tweak SRLC): [$(valMsg ${tweakSRLC})]";
+
+    IS_OK=false;
+    tweakInfo="$(valMsg ${VERSION_TWEAK})";
+    for item in ${SRLC_CAN}; do
+        [ "${tweakSRLC}" = "${item}" ] && IS_OK=true && break;
+    done
+
+    if ! ${IS_OK}; then
+        errMsg "$(keyMsg TWEAK)(${tweakInfo}) must be one of: ${SRLC_HELP}";
+    fi
+
+    tweak_TXT=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\1/");
+    tweak_NUM=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\5/");
+
+    # Checking again because the value may be overwrite from cmd-line
+    IS_TXT=$(echo "${tweak_TXT}" | ${_sed} -n "/^[a-z]+(-[a-z]+)*$/p");
+    IS_NUM=$(echo "${tweak_NUM}" | ${_sed} -n "/^[0-9]+(\.[0-9]+)*$/p");
+    if [ -z "${IS_TXT}" -a -z "${IS_NUM}" ]; then
+        errMsg "$(keyMsg TWEAK)(${tweakInfo}) format should be: ${SRLC_HELP}";
+    fi
+
+    [ -z "${IS_TXT}" ] && tweak_TXT="";
+    [ -z "${IS_NUM}" ] && tweak_NUM="";
+
+    VERSION_TWEAK_TXT="${tweak_TXT}";
+    VERSION_TWEAK_NUM="${tweak_NUM}";
+    debugMsg "$(keyMsg Final tweak text): [$(valMsg ${tweak_TXT})]";
+    debugMsg "$(keyMsg Final tweak nums): [$(valMsg ${tweak_NUM})]";
+}
+
+if [ -z "${VERSION_TWEAK}" ]; then
+    RELEASE_TAG="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
 else
-    __VERSION="${__VERSION_MAJOR}.${__VERSION_MINOR}.${__VERSION_PATCH}-${__VERSION_TWEAK}"
+    RELEASE_TAG="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_TWEAK}"
 fi
 
-{ [ -z "$__VERSION_MAJOR" ] || [ -z "$__VERSION_MINOR" ] || [ -z "$__VERSION_PATCH" ]; } \
-    && { echo "ERROR: version parse failed: ${__VERSION}"; exit 1; }
+{ [ -z "${VERSION_MAJOR}" ] || [ -z "{$VERSION_MINOR}" ] || [ -z "${VERSION_PATCH}" ]; } \
+    && errMsg "Release semver($(valMsg ${RELEASE_TAG})) error";
 
-# Check if __VERSION is valid semver
-if ! $(standard-release -x --is-semver "${__VERSION}"); then
-    echo "ERROR: invalid semver: ${__VERSION}"; exit 1;
+# Check if RELEASE_TAG is valid semver
+if ! $(standard-release -x --is-semver "${RELEASE_TAG}"); then
+    errMsg "Invalid release semver($(valMsg ${RELEASE_TAG}))";
 fi
 
-__NEXT_TAG="v${__VERSION}"
-__API_LEVEL=${__VERSION_MAJOR}
+for tag in $(git tag --list); do
+    [ "${tag}" = "${RELEASE_TAG}" ] \
+        && errMsg "The semver tag $(valMsg ${tag}) already exists";
+done
 
-if [ -z "${PRC_RELEASE_MSG}" ]; then
-    __RELEASE_MSG="chore(release): ${__NEXT_TAG}"
-else
-    __RELEASE_MSG="chore(release): ${PRC_RELEASE_MSG} ${__NEXT_TAG}"
+# Sync CHANGELOG.md release tag to the one really used
+${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" CHANGELOG.md
+rm CHANGELOG.md.bk;
+
+infoMsg "-------------------------------------------------";
+_major_="$(valMsg ${VERSION_MAJOR})";
+[ "${PREV_MAJOR}" != "${VERSION_MAJOR}" ] \
+    && _major_="$(msgRed ${VERSION_MAJOR})";
+
+_minor_="$(valMsg ${VERSION_MINOR})";
+[ "${PREV_MINOR}" != "${VERSION_MINOR}" ] \
+    && _minor_="$(msgRed ${VERSION_MINOR})";
+
+_patch_="$(valMsg ${VERSION_PATCH})";
+[ "${PREV_PATCH}" != "${VERSION_PATCH}" ] \
+    && _patch_="$(msgRed ${VERSION_PATCH})";
+
+_tweak_="$(valMsg ${VERSION_TWEAK})";
+if [ "${PREV_TWEAK}" != "${VERSION_TWEAK}" ]; then
+    _tweak_=""; # clean it
+    if [ -n "${VERSION_TWEAK_TXT}" ]; then
+        _tweak_="$(valMsg ${VERSION_TWEAK_TXT})";
+        [ "${PREV_TWEAK_TXT}" != "${VERSION_TWEAK_TXT}" ] \
+            && _tweak_="$(msgRed ${VERSION_TWEAK_TXT})";
+    fi
+
+    if [ -n "${VERSION_TWEAK_NUM}" ]; then
+        if [ "${PREV_TWEAK_NUM}" != "${VERSION_TWEAK_NUM}" ]; then
+            _tweak_="${_tweak_}$(msgRed .${VERSION_TWEAK_NUM})";
+        else
+            _tweak_="${_tweak_}$(valMsg .${VERSION_TWEAK_NUM})";
+        fi
+    fi
 fi
 
-echo "Latest tag : ${__LAST_TAG}"
-echo "Release tag: ${__NEXT_TAG}"
+# Make the output pretty look
+maxStrLen=$(maxNum ${#PREV_MAJOR} ${#PREV_MINOR} ${#PREV_PATCH} ${#PREV_TWEAK});
 
-__CHANGELOG='CHANGELOG.md'
-if [ -n "${PUC_CHANGELOG}" ]; then
-    __CHANGELOG="${PUC_CHANGELOG}"
+indentA="";
+strLen=${#PREV_MAJOR};
+while [ ${strLen} -le ${maxStrLen} ]; do
+  let strLen++;
+  indentA="${indentA} ";
+done
+
+indentB="";
+strLen=${#PREV_MINOR};
+while [ ${strLen} -le ${maxStrLen} ]; do
+  let strLen++;
+  indentB="${indentB} ";
+done
+
+indentC="";
+strLen=${#PREV_PATCH};
+while [ ${strLen} -le ${maxStrLen} ]; do
+  let strLen++;
+  indentC="${indentC} ";
+done
+
+indentD="";
+strLen=${#PREV_TWEAK};
+while [ ${strLen} -le ${maxStrLen} ]; do
+  let strLen=strLen+1;
+  indentD="${indentD} ";
+done
+
+#debugMsg "$(keyMsg Max length): [$(valMsg ${maxStrLen})]";
+#debugMsg "$(keyMsg Major indent): [${indentA}]";
+#debugMsg "$(keyMsg Minor indent): [${indentB}]";
+#debugMsg "$(keyMsg Patch indent): [${indentC}]";
+#debugMsg "$(keyMsg Tweak indent): [${indentD}]";
+
+infoMsg "Recently tag : $(keyMsg ${LATEST_TAG})";
+infoMsg "Release major: $(keyMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
+infoMsg "Release minor: $(keyMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
+infoMsg "Release patch: $(keyMsg ${PREV_PATCH})${indentC}=> ${_patch_}";
+infoMsg "Release tweak: $(keyMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
+infoMsg "Release tag  : $(valMsg ${RELEASE_TAG})";
+
+if ${AUTO_BUMP_SEMVER}; then
+    # Update Version
+    ${_sed} -i.bk "s/${REGEXP_MAJOR}/\1 ${VERSION_MAJOR}\3/" ${VS_VFILE};
+    ${_sed} -i.bk "s/${REGEXP_MINOR}/\1 ${VERSION_MINOR}\3/" ${VS_VFILE};
+    ${_sed} -i.bk "s/${REGEXP_PATCH}/\1 ${VERSION_PATCH}\3/" ${VS_VFILE};
+
+    if [ "${VS_VFILE_TYPE}" = "C" ]; then
+        if [ -z "${VERSION_TWEAK}" ]; then
+            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1\"\"\3/" ${VS_VFILE}; # empty tweak
+        else
+            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 \"${VERSION_TWEAK}\"\3/" ${VS_VFILE};
+        fi
+    else
+        if [ -z "${VERSION_TWEAK}" ]; then
+            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1\3/" ${VS_VFILE}; # empty tweak
+        else
+            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 ${VERSION_TWEAK}\3/" ${VS_VFILE};
+        fi
+    fi
+
+    rm ${VS_VFILE}.bk;
 fi
 
-# Update CHANGELOG.md from __LAST_TAG to HEAD
-if ! $(standard-release -c "${PUC_CHANGELOG}" > /dev/null); then
-    echo "ERROR: update changelog: ${__CHANGELOG}"; exit 1;
+# Git Commit & Tag
+COMMIT_MSG="chore(auto): release ${RELEASE_TAG}";
+TAG_MSG="chore(auto): tag ${RELEASE_TAG}
+
+- Detail changes see CHANGELOG.md
+- Building changelog since ${LATEST_TAG}";
+
+infoMsg "-------------------------------------------------";
+infoMsg "The message for signed-off commit";
+printf "$(msgGreen ${COMMIT_MSG})\n";
+
+infoMsg "The message for signed annotated tag";
+printf "$(msgGreen ${TAG_MSG})\n";
+
+infoMsg "-------------------------------------------------";
+infoMsgL "Show CHANGELOG.md diff (y/n) [n]: ";
+read -p "" usrInput;
+if isYes "${usrInput}"; then
+    git diff CHANGELOG.md;
 fi
 
-git add "${__CHANGELOG}"
-git commit -m "${__RELEASE_MSG}
+infoMsg "-------------------------------------------------";
+infoMsgL "Show version file diff (y/n) [n]: ";
+read -p "" usrInput;
+if isYes "${usrInput}"; then
+    git diff ${VS_VFILE};
+fi
 
-More detail changes see: ${__CHANGELOG}"
+infoMsg "-------------------------------------------------";
+infoMsgL "Build the project (Build Command or $(keyMsg SKIP)) [make]: ";
+read -p "" usrInput;
+[ -z "${usrInput}" ] && usrInput='make'; # Just Enter
+if [ "${usrInput}" != "SKIP" ]; then
+    ${usrInput}; # the project build command
+fi
 
-git tag --sign -a v"${__VERSION}" -m "${__RELEASE_MSG}"
+infoMsg "-------------------------------------------------";
+infoMsgL "Run build programme to confirm (Command to run) []: ";
+read -p "" usrInput;
+if [ -n "${usrInput}" ]; then
+    ${usrInput}; # the executable programme to run
+fi
+
+# Really want to do this
+infoMsg "-------------------------------------------------";
+infoMsgL "Release confirm git commit and tag (y/n) [n]: ";
+read -p "" usrInput;
+if isNo "${usrInput}"; then
+    yesMsg="$(keyMsg y), $(keyMsg yes), $(keyMsg Y)";
+    yesMsg="${yesMsg}, $(keyMsg Yes) or $(keyMsg YES)";
+    errMsg "Release stop, confirm with ${yesMsg}";
+fi
+
+if isYes "${usrInput}"; then
+    git add CHANGELOG.md; # Auto update changelog
+    git add ${VS_VFILE};  # Auto update semver maybe
+
+    # Do release commit
+    git commit --signoff -m "${COMMIT_MSG}";
+    # Tag the release commit
+    git tag --sign -a "${RELEASE_TAG}" -m "${TAG_MSG}";
+fi
+
+infoMsg "################";
+infoMsg "# Release Done #";
+infoMsg "################";
