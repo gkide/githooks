@@ -238,7 +238,7 @@ PREV_TWEAK_NUM="";
 #                                                  #
 # SEMVER_TAG is like '1.2.3' or '1.2.3.1'          #
 ####################################################
-SEMVER_TAG=$(standard-release -c 2>/dev/null | head -n 1 \
+SEMVER_TAG=$(standard-release -x -c 2>/dev/null | head -n 1 \
     | awk -F':' 'gsub(/[ ]/,"",$2) { print $2; }');
 [ -n "${SEMVER_TAG}" ] \
     || errMsg "Get auto semver failed, try install npm $(keyMsg standard-release)";
