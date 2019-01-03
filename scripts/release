@@ -64,23 +64,25 @@ _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 REPO_DIR=$(git rev-parse --show-toplevel)
 cd "${REPO_DIR}"
 
-#####################################
-# Import normal shell function-util #
-# - IS_DEBUG_MODE=true;             #
-# - IS_VERBOSE_MODE=true;           #
-#####################################
-source ${REPO_DIR}/scripts/utils.sh;
-IS_DEBUG_MODE=false;
+################################################################################
+# Local configurations
+
+# If the tweak need quotes
+VS_TWEAK_QUOTES=""; # no quotes
+#VS_TWEAK_QUOTES="S"; # signal quotes
+#VS_TWEAK_QUOTES="D"; # double quotes
 
 ##########################
 # Release Version Search #
 ##########################
-# Version format should be MAJOR/MINOR/PATCH/TWEAK,
-# make sure each line has one, like the following:
-# - The basic version number: MAJOR.MINOR.PATCH
+# Version should consist of MAJOR/MINOR/PATCH/TWEAK
+# - The MAJOR, MINOR, PATCH must consit of numbers of [0-9]
 # - TWEAK is pre-release part, consist of [a-z0-9.-]
-# - Following will result in release tag: v1.2.3-pre
-#
+# Each line must has one, like the following
+#    XXX_VERSION_MAJOR
+#    XXX_VERSION_MINOR
+#    XXX_VERSION_PATCH
+#    XXX_VERSION_TWEAK
 ###########################
 # Example of C/C++ header #
 ###########################
@@ -90,12 +92,13 @@ IS_DEBUG_MODE=false;
 #define XXX_VERSION_TWEAK "pre" # Can be ignored, consist of [a-z0-9.-]
 #
 # Version search file, full path
-#VS_VFILE_TYPE="C";
-#VS_VFILE="${REPO_DIR}/version.h";
-#VS_MAJOR="#define XXX_VERSION_MAJOR";
-#VS_MINOR="#define XXX_VERSION_MINOR";
-#VS_PATCH="#define XXX_VERSION_PATCH";
-#VS_TWEAK="#define XXX_VERSION_TWEAK";
+if false; then
+VS_VFILE="${REPO_DIR}/version.h";
+VS_MAJOR="#define XXX_VERSION_MAJOR";
+VS_MINOR="#define XXX_VERSION_MINOR";
+VS_PATCH="#define XXX_VERSION_PATCH";
+VS_TWEAK="#define XXX_VERSION_TWEAK";
+fi
 #
 #############################
 # Example of CMakeLists.txt #
@@ -106,23 +109,34 @@ IS_DEBUG_MODE=false;
 #set(XXX_VERSION_TWEAK pre)     # Can be ignored, consist of [a-z0-9.-]
 #
 # Version search file, full path
-#VS_VFILE_TYPE="CMake";
-#VS_VFILE="${REPO_DIR}/CMakeLists.txt";
-#VS_MAJOR="set(XXX_VERSION_MAJOR";
-#VS_MINOR="set(XXX_VERSION_MINOR";
-#VS_PATCH="set(XXX_VERSION_PATCH";
-#VS_TWEAK="set(XXX_VERSION_TWEAK";
+if false; then
+VS_VFILE="${REPO_DIR}/CMakeLists.txt";
+VS_MAJOR="set(XXX_VERSION_MAJOR";
+VS_MINOR="set(XXX_VERSION_MINOR";
+VS_PATCH="set(XXX_VERSION_PATCH";
+VS_TWEAK="set(XXX_VERSION_TWEAK";
+fi
 #
 #########################
 # Example of Other Type #
 #########################
 # Version search file, must be file in repo
-VS_VFILE_TYPE="File";
+if true; then
 VS_VFILE="${REPO_DIR}/.version";
 VS_MAJOR="GITHOOKS_MAJOR"; # Can not ignore, must be 0 ~ 9
 VS_MINOR="GITHOOKS_MINOR"; # Can not ignore, must be 0 ~ 9
 VS_PATCH="GITHOOKS_PATCH"; # Can not ignore, must be 0 ~ 9
 VS_TWEAK="GITHOOKS_TWEAK"; # Can be ignored, consist of [a-z0-9.-]
+fi
+################################################################################
+
+#####################################
+# Import normal shell function-util #
+# - IS_DEBUG_MODE=true;             #
+# - IS_VERBOSE_MODE=true;           #
+#####################################
+source ${REPO_DIR}/scripts/utils.sh;
+IS_DEBUG_MODE=false;
 
 if [ ! -f ${VS_VFILE} ]; then
     errMsg "Do not exits $(keyMsg ${VS_VFILE})";
@@ -198,10 +212,10 @@ _VS_TWEAK_=$(echo "${VS_TWEAK}" \
     | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
 
 # Version RegExp Pattern
-REGEXP_MAJOR="^(${_VS_MAJOR_})\s+\\\"*([0-9]+)\\\"*\s*(.*)$";
-REGEXP_MINOR="^(${_VS_MINOR_})\s+\\\"*([0-9]+)\\\"*\s*(.*)$";
-REGEXP_PATCH="^(${_VS_PATCH_})\s+\\\"*([0-9]+)\\\"*\s*(.*)$";
-REGEXP_TWEAK="^(${_VS_TWEAK_})\s*\\\"*([0-9a-z\.-]+)*\\\"*\s*(.*)$";
+REGEXP_MAJOR="^(${_VS_MAJOR_})\s+\\\"*'*([0-9]+)'*\\\"*\s*(.*)$";
+REGEXP_MINOR="^(${_VS_MINOR_})\s+\\\"*'*([0-9]+)'*\\\"*\s*(.*)$";
+REGEXP_PATCH="^(${_VS_PATCH_})\s+\\\"*'*([0-9]+)'*\\\"*\s*(.*)$";
+REGEXP_TWEAK="^(${_VS_TWEAK_})\s*\\\"*'*([0-9a-z\.-]+)*'*\\\"*\s*(.*)$";
 debugMsg "$(keyMsg RegExp Major): [$(valMsg ${REGEXP_MAJOR})]";
 debugMsg "$(keyMsg RegExp Minor): [$(valMsg ${REGEXP_MINOR})]";
 debugMsg "$(keyMsg RegExp Patch): [$(valMsg ${REGEXP_PATCH})]";
@@ -569,19 +583,28 @@ if ${AUTO_BUMP_SEMVER}; then
     ${_sed} -i.bk "s/${REGEXP_MINOR}/\1 ${VERSION_MINOR}\3/" ${VS_VFILE};
     ${_sed} -i.bk "s/${REGEXP_PATCH}/\1 ${VERSION_PATCH}\3/" ${VS_VFILE};
 
-    if [ "${VS_VFILE_TYPE}" = "C" ]; then
+    case "${VS_TWEAK_QUOTES}" in
+    "S")
+        if [ -z "${VERSION_TWEAK}" ]; then
+            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1''\3/" ${VS_VFILE}; # empty tweak
+        else
+            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 '${VERSION_TWEAK}'\3/" ${VS_VFILE};
+        fi
+        ;;
+    "D")
         if [ -z "${VERSION_TWEAK}" ]; then
             ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1\"\"\3/" ${VS_VFILE}; # empty tweak
         else
             ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 \"${VERSION_TWEAK}\"\3/" ${VS_VFILE};
         fi
-    else
+        ;;
+    *)
         if [ -z "${VERSION_TWEAK}" ]; then
             ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1\3/" ${VS_VFILE}; # empty tweak
         else
             ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 ${VERSION_TWEAK}\3/" ${VS_VFILE};
         fi
-    fi
+    esac
 
     rm ${VS_VFILE}.bk;
 fi
@@ -635,7 +658,7 @@ printf "$(msgGreen "${TAG_MSG}")\n";
 
 # Really want to do this
 infoMsg "-------------------------------------------------";
-infoMsgL "Release confirm git commit and tag (y/n) [n]: ";
+infoMsgL "Confirm git commit & tag (y/n) [n]: ";
 read -p "" usrInput;
 if isNo "${usrInput}"; then
     yesMsg="$(keyMsg y), $(keyMsg yes), $(keyMsg Y)";
