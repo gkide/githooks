@@ -106,12 +106,36 @@ IS_DEBUG_MODE=false;
 #set(XXX_VERSION_TWEAK pre)     # Can be ignored, consist of [a-z0-9.-]
 #
 # Version search file, full path
-VS_VFILE_TYPE="CMake";
-VS_VFILE="${REPO_DIR}/CMakeLists.txt";
-VS_MAJOR="set(XXX_VERSION_MAJOR";
-VS_MINOR="set(XXX_VERSION_MINOR";
-VS_PATCH="set(XXX_VERSION_PATCH";
-VS_TWEAK="set(XXX_VERSION_TWEAK";
+#VS_VFILE_TYPE="CMake";
+#VS_VFILE="${REPO_DIR}/CMakeLists.txt";
+#VS_MAJOR="set(XXX_VERSION_MAJOR";
+#VS_MINOR="set(XXX_VERSION_MINOR";
+#VS_PATCH="set(XXX_VERSION_PATCH";
+#VS_TWEAK="set(XXX_VERSION_TWEAK";
+#
+#########################
+# Example of Other Type #
+#########################
+# Version search file, must be file in repo
+VS_VFILE_TYPE="File";
+VS_VFILE="${REPO_DIR}/.version";
+VS_MAJOR="GITHOOKS_MAJOR"; # Can not ignore, must be 0 ~ 9
+VS_MINOR="GITHOOKS_MINOR"; # Can not ignore, must be 0 ~ 9
+VS_PATCH="GITHOOKS_PATCH"; # Can not ignore, must be 0 ~ 9
+VS_TWEAK="GITHOOKS_TWEAK"; # Can be ignored, consist of [a-z0-9.-]
+
+if [ ! -f ${VS_VFILE} ]; then
+    errMsg "Do not exits $(keyMsg ${VS_VFILE})";
+fi
+
+# The version file should be one file of the repo subdirectory
+fullPath=$(realpath ${VS_VFILE});
+isRepoFile=${fullPath#${REPO_DIR}/};
+if [ "${isRepoFile}" = "${fullPath}" ]; then
+    errMsg "$(valMsg ${fullPath}) NOT in the repo
+       $(keyMsg ${REPO_DIR})";
+fi
+VS_VFILE=${isRepoFile}; # Relative path of repo
 
 infoMsg "Working repo $(valMsg ${REPO_DIR})";
 infoMsg "-------------------------------------------------";
@@ -126,15 +150,9 @@ infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
 read -p "" usrInput;
 [ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
 
-if isNo "${usrInput}"; then
+if ! isYes "${usrInput}"; then
     errMsg "Release stop.";
 fi
-
-#######################################
-# Search annotated & lightweight tags #
-#######################################
-LATEST_TAG=$(git describe --abbrev=0 --tags);
-[ -z "${LATEST_TAG}" ] && errMsg 'No git tag found';
 
 ###############################
 # Software Release Life Cycle #
@@ -199,8 +217,9 @@ VERSION_PATCH=$(grep "${VS_PATCH}" ${VS_VFILE} \
 VERSION_TWEAK=$(grep "${VS_TWEAK}" ${VS_VFILE} \
     | ${_sed} "s/${REGEXP_TWEAK}/\2/");
 
-{ [ -z "${VERSION_MAJOR}" ] || [ -z "{$VERSION_MINOR}" ] || [ -z "${VERSION_PATCH}" ]; } \
-    && errMsg "Get semantic version from $(keyMsg ${VS_VFILE}) failed";
+if [ -z "${VERSION_MAJOR}" -o -z "{$VERSION_MINOR}" -o -z "${VERSION_PATCH}" ]; then
+    errMsg "Get semantic version from $(keyMsg ${VS_VFILE}) failed";
+fi
 
 # Save the previous version
 PREV_MAJOR=${VERSION_MAJOR}
@@ -232,13 +251,32 @@ PREV_TWEAK_NUM="";
     debugMsg "$(keyMsg Tweak old nums): [$(valMsg ${PREV_TWEAK_NUM})]";
 }
 
-####################################################
-# - Update CHANGELOG.md                            #
-# - Get the next semver base on latest tag of repo #
-#                                                  #
-# SEMVER_TAG is like '1.2.3' or '1.2.3.1'          #
-####################################################
-SEMVER_TAG=$(standard-release -x -c 2>/dev/null | head -n 1 \
+##############################################
+# Update CHANGELOG.md & get next auto semver #
+# SEMVER_TAG is like '1.2.3' or '1.2.3-1'    #
+##############################################
+CHANGELOG="CHANGELOG.md";
+if [ ! -f "${CHANGELOG}" ]; then
+    infoMsgL "Changelog to update (File) [$(valMsg ${CHANGELOG})]: ";
+    read -p "" usrInput;
+    [ -n "${usrInput}" ] && CHANGELOG="${usrInput}";
+
+    fullPath=$(realpath -m ${CHANGELOG});
+    isRepoFile=${fullPath#${REPO_DIR}/};
+    if [ "${isRepoFile}" = "${fullPath}" ]; then
+        errMsg "$(valMsg ${fullPath}) NOT in the repo
+       $(keyMsg ${REPO_DIR})";
+    fi
+    CHANGELOG=${isRepoFile}; # Relative path of repo
+
+    if [ ! -f "${CHANGELOG}" ]; then
+        pathName=$(dirname ${CHANGELOG});
+        [ ! -e "${pathName}" ] && mkdir -p ${pathName};
+        touch "${CHANGELOG}";
+    fi
+fi
+
+SEMVER_TAG=$(standard-release -x -c ${CHANGELOG} 2>/dev/null | head -n 1 \
     | awk -F':' 'gsub(/[ ]/,"",$2) { print $2; }');
 [ -n "${SEMVER_TAG}" ] \
     || errMsg "Get auto semver failed, try install npm $(keyMsg standard-release)";
@@ -443,8 +481,8 @@ for tag in $(git tag --list); do
 done
 
 # Sync CHANGELOG.md release tag to the one really used
-${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" CHANGELOG.md
-rm CHANGELOG.md.bk;
+${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" ${CHANGELOG}
+rm ${CHANGELOG}.bk;
 
 infoMsg "-------------------------------------------------";
 _major_="$(valMsg ${VERSION_MAJOR})";
@@ -514,12 +552,16 @@ done
 #debugMsg "$(keyMsg Patch indent): [${indentC}]";
 #debugMsg "$(keyMsg Tweak indent): [${indentD}]";
 
+# The previous latest tag
+LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "");
+[ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit";
+
 infoMsg "Recently tag : $(keyMsg ${LATEST_TAG})";
-infoMsg "Release major: $(keyMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
-infoMsg "Release minor: $(keyMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
-infoMsg "Release patch: $(keyMsg ${PREV_PATCH})${indentC}=> ${_patch_}";
-infoMsg "Release tweak: $(keyMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
 infoMsg "Release tag  : $(valMsg ${RELEASE_TAG})";
+infoMsg "Release major: $(valMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
+infoMsg "Release minor: $(valMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
+infoMsg "Release patch: $(valMsg ${PREV_PATCH})${indentC}=> ${_patch_}";
+infoMsg "Release tweak: $(valMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
 
 if ${AUTO_BUMP_SEMVER}; then
     # Update Version
@@ -544,29 +586,15 @@ if ${AUTO_BUMP_SEMVER}; then
     rm ${VS_VFILE}.bk;
 fi
 
-# Git Commit & Tag
-COMMIT_MSG="chore(auto): release ${RELEASE_TAG}";
-TAG_MSG="chore(auto): tag ${RELEASE_TAG}
-
-- Detail changes see CHANGELOG.md
-- Building changelog since ${LATEST_TAG}";
-
 infoMsg "-------------------------------------------------";
-infoMsg "The message for signed-off commit";
-printf "$(msgGreen ${COMMIT_MSG})\n";
-
-infoMsg "The message for signed annotated tag";
-printf "$(msgGreen ${TAG_MSG})\n";
-
-infoMsg "-------------------------------------------------";
-infoMsgL "Show CHANGELOG.md diff (y/n) [n]: ";
+infoMsgL "Show $(valMsg ${CHANGELOG}) diff (y/n) [n]: ";
 read -p "" usrInput;
 if isYes "${usrInput}"; then
-    git diff CHANGELOG.md;
+    git diff ${CHANGELOG};
 fi
 
 infoMsg "-------------------------------------------------";
-infoMsgL "Show version file diff (y/n) [n]: ";
+infoMsgL "Show $(valMsg ${VS_VFILE}) diff (y/n) [n]: ";
 read -p "" usrInput;
 if isYes "${usrInput}"; then
     git diff ${VS_VFILE};
@@ -581,11 +609,29 @@ if [ "${usrInput}" != "SKIP" ]; then
 fi
 
 infoMsg "-------------------------------------------------";
-infoMsgL "Run build programme to confirm (Command to run) []: ";
+infoMsgL "Run programme to confirm (Command to run) []: ";
 read -p "" usrInput;
 if [ -n "${usrInput}" ]; then
     ${usrInput}; # the executable programme to run
 fi
+
+# Git Commit & Tag
+TAG_HDR="chore(auto): tag ${RELEASE_TAG}";
+CMT_HDR="chore(auto): release ${RELEASE_TAG}";
+MSG_BDY="
+
+- Detail changes see ${CHANGELOG}
+- Building changelog since ${LATEST_TAG}";
+
+TAG_MSG="${TAG_HDR}${MSG_BDY}";
+COMMIT_MSG="${CMT_HDR}${MSG_BDY}";
+
+infoMsg "-------------------------------------------------";
+infoMsg "The message for signed-off commit";
+printf "$(msgGreen "${COMMIT_MSG}")\n";
+
+infoMsg "The message for signed annotated tag";
+printf "$(msgGreen "${TAG_MSG}")\n";
 
 # Really want to do this
 infoMsg "-------------------------------------------------";
@@ -598,12 +644,12 @@ if isNo "${usrInput}"; then
 fi
 
 if isYes "${usrInput}"; then
-    git add CHANGELOG.md; # Auto update changelog
-    git add ${VS_VFILE};  # Auto update semver maybe
+    git add ${VS_VFILE};  # Update version
+    git add ${CHANGELOG}; # Update changelog
 
     # Do release commit
     git commit --signoff -m "${COMMIT_MSG}";
-    # Tag the release commit
+    # Do release tag
     git tag --sign -a "${RELEASE_TAG}" -m "${TAG_MSG}";
 fi
 
