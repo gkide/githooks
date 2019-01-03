@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-GITHOOKS_VERSION="1.2";
+GITHOOKS_VERSION="v0.0.3-rc.0";
 
 # Semantic Version
 # https://semver.org/
@@ -674,6 +674,8 @@ if isYes "${usrInput}"; then
 
     if [ "$1" = "GITHOOKS_RELEASE" ]; then
         ${_sed} -i.bk "s/^(GITHOOKS_VERSION=\")([0-9a-z\.-]+)(\";)$/\1${RELEASE_TAG}\3/" ${0};
+        rm ${0}.bk;
+        git add ${0};
     fi
 
     # Do release commit

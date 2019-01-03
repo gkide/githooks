@@ -6,4 +6,4 @@ all:
 
 PHONY += release
 release:
-	@scripts/release
+	@scripts/release GITHOOKS_RELEASE
