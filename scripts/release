@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 GITHOOKS_VERSION="v0.0.1-rc.0";
+# https://github.com/gkide/githooks
 
 # Semantic Version
 # https://semver.org/
