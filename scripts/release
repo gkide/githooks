@@ -82,42 +82,42 @@ VS_TWEAK_QUOTES=""; # no quotes
 # - The MAJOR, MINOR, PATCH must consit of numbers of [0-9]
 # - TWEAK is pre-release part, consist of [a-z0-9.-]
 # Each line must has one, like the following
-#    XXX_VERSION_MAJOR
-#    XXX_VERSION_MINOR
-#    XXX_VERSION_PATCH
-#    XXX_VERSION_TWEAK
+#    MY_VERSION_MAJOR
+#    MY_VERSION_MINOR
+#    MY_VERSION_PATCH
+#    MY_VERSION_TWEAK
 ###########################
 # Example of C/C++ header #
 ###########################
-#define XXX_VERSION_MAJOR 1     # Can not ignore, must be 0 ~ 9
-#define XXX_VERSION_MINOR 2     # Can not ignore, must be 0 ~ 9
-#define XXX_VERSION_PATCH 3     # Can not ignore, must be 0 ~ 9
-#define XXX_VERSION_TWEAK "pre" # Can be ignored, consist of [a-z0-9.-]
+#define MY_VERSION_MAJOR 1     # Can not ignore, must be 0 ~ 9
+#define MY_VERSION_MINOR 2     # Can not ignore, must be 0 ~ 9
+#define MY_VERSION_PATCH 3     # Can not ignore, must be 0 ~ 9
+#define MY_VERSION_TWEAK "pre" # Can be ignored, consist of [a-z0-9.-]
 #
 # Version search file, full path
 if false; then
 VS_VFILE="${REPO_DIR}/version.h";
-VS_MAJOR="#define XXX_VERSION_MAJOR";
-VS_MINOR="#define XXX_VERSION_MINOR";
-VS_PATCH="#define XXX_VERSION_PATCH";
-VS_TWEAK="#define XXX_VERSION_TWEAK";
+VS_MAJOR="#define MY_VERSION_MAJOR";
+VS_MINOR="#define MY_VERSION_MINOR";
+VS_PATCH="#define MY_VERSION_PATCH";
+VS_TWEAK="#define MY_VERSION_TWEAK";
 fi
 #
 #############################
 # Example of CMakeLists.txt #
 #############################
-#set(XXX_VERSION_MAJOR 0)       # Can not ignore, must be 0 ~ 9
-#set(XXX_VERSION_MINOR 0)       # Can not ignore, must be 0 ~ 9
-#set(XXX_VERSION_PATCH 6)       # Can not ignore, must be 0 ~ 9
-#set(XXX_VERSION_TWEAK pre)     # Can be ignored, consist of [a-z0-9.-]
+#set(MY_VERSION_MAJOR 0)       # Can not ignore, must be 0 ~ 9
+#set(MY_VERSION_MINOR 0)       # Can not ignore, must be 0 ~ 9
+#set(MY_VERSION_PATCH 6)       # Can not ignore, must be 0 ~ 9
+#set(MY_VERSION_TWEAK pre)     # Can be ignored, consist of [a-z0-9.-]
 #
 # Version search file, full path
 if false; then
 VS_VFILE="${REPO_DIR}/CMakeLists.txt";
-VS_MAJOR="set(XXX_VERSION_MAJOR";
-VS_MINOR="set(XXX_VERSION_MINOR";
-VS_PATCH="set(XXX_VERSION_PATCH";
-VS_TWEAK="set(XXX_VERSION_TWEAK";
+VS_MAJOR="set(MY_VERSION_MAJOR";
+VS_MINOR="set(MY_VERSION_MINOR";
+VS_PATCH="set(MY_VERSION_PATCH";
+VS_TWEAK="set(MY_VERSION_TWEAK";
 fi
 #
 #########################
@@ -126,10 +126,10 @@ fi
 # Version search file, must be file in repo
 if true; then
 VS_VFILE="${REPO_DIR}/.version";
-VS_MAJOR="GITHOOKS_MAJOR"; # Can not ignore, must be 0 ~ 9
-VS_MINOR="GITHOOKS_MINOR"; # Can not ignore, must be 0 ~ 9
-VS_PATCH="GITHOOKS_PATCH"; # Can not ignore, must be 0 ~ 9
-VS_TWEAK="GITHOOKS_TWEAK"; # Can be ignored, consist of [a-z0-9.-]
+VS_MAJOR="MY_VERSION_MAJOR"; # Can not ignore, must be 0 ~ 9
+VS_MINOR="MY_VERSION_MINOR"; # Can not ignore, must be 0 ~ 9
+VS_PATCH="MY_VERSION_PATCH"; # Can not ignore, must be 0 ~ 9
+VS_TWEAK="MY_VERSION_TWEAK"; # Can be ignored, consist of [a-z0-9.-]
 fi
 ################################################################################
 
