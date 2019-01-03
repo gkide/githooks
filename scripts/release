@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+GITHOOKS_VERSION="1.2";
+
 # Semantic Version
 # https://semver.org/
 # Software Release Life Cycle
@@ -669,6 +671,10 @@ fi
 if isYes "${usrInput}"; then
     git add ${VS_VFILE};  # Update version
     git add ${CHANGELOG}; # Update changelog
+
+    if [ "$1" = "GITHOOKS_RELEASE" ]; then
+        ${_sed} -i.bk "s/^(GITHOOKS_VERSION=\")([0-9a-z\.-]+)(\";)$/\1${RELEASE_TAG}\3/" ${0};
+    fi
 
     # Do release commit
     git commit --signoff -m "${COMMIT_MSG}";

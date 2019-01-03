@@ -1,6 +1,11 @@
 # Change Log
 ALL NOTABLE CHANGES WILL BE DOCUMENTED HERE.
 
+## Release [v0.0.2](https://github.com/gkide/githooks/releases/tag/v0.0.2)
+
+### BugFixes
+- fix: support tweak double/signal quotes ([d3116e4](https://github.com/gkide/githooks/commit/d3116e4))
+
 ## Release [v0.0.1](https://github.com/gkide/githooks/releases/tag/v0.0.1)
 
 ### Features
