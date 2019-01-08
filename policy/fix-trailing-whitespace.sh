@@ -22,7 +22,7 @@ for line in $(git diff --check --cached | sed '/^[+-]/d'); do
     fi
 
     # display tips
-    echo "remove trailing whitespace: $(msg_green ${file_name})"
+    # echo "remove trailing whitespace: $(msg_green ${file_name})"
 
     # since ${file_name} in working directory isn't always
     # equal to ${file_name} in index, so backup it
