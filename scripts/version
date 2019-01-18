@@ -1,0 +1,42 @@
+# SVN Info
+# - SVN Repo Reversion
+# - SVN Sub Path Reversion
+# - SVN Remote Repo URL
+# - SVN Sub Path Modify Date Time
+################################################################################
+# example 1
+MY_SVN_SUB_REVERSION    3256 # this is svn sub path reversion
+// any thing is ok
+MY_SVN_REPO_REVERSION   012 // this is svn repo reversion
+MY_SVN_REPO_URL         "svn://abc/def/xyz"
+MY_SVN_REPO_URL         "http://abc/def/xyz"
+MY_SVN_REPO_URL         "https://abc/def/xyz"
+MY_SVN_MODIFY_TIME      3649-23-45 45:45:04 +0845
+
+--------------------------------------------------------------------------------
+# example 2
+const int MY_SVN_SUB_REVERSION = 3256 # this is svn sub path reversion
+const int MY_SVN_REPO_REVERSION = 012 // this is svn repo reversion
+// any thing is ok
+const char *MY_SVN_REPO_URL = "svn://abc/def/xyz"
+const char * MY_SVN_MODIFY_TIME = "3649-23-45 45:45:04 +0845" /// this is modify time date
+
+--------------------------------------------------------------------------------
+# example 3
+const char MY_SVN_SUB_REVERSION = '3256' # this is svn sub path reversion
+const char MY_SVN_REPO_REVERSION = '012' // this is svn repo reversion
+const String MY_SVN_REPO_URL = "http://abc/def/xyz"
+
+--------------------------------------------------------------------------------
+# example 4
+const String MY_SVN_SUB_REVERSION  = "3256" # this is svn sub path reversion
+const String MY_SVN_REPO_REVERSION = "012" // this is svn repo reversion
+// any thing is ok
+const String MY_SVN_MODIFY_TIME    = "3649-23-45 45:45:04 +0845" /// this is modify time date
+
+--------------------------------------------------------------------------------
+# example 5
+ const String MY_SVN_SUB_REVERSION  =  "3256" # this is svn sub path reversion
+const  String MY_SVN_REPO_REVERSION =  "012" // this is svn repo reversion
+// any thing is ok
+const  String  MY_SVN_MODIFY_TIME   =  "3649-23-45 45:45:04 +0845" /// this is modify time date
