@@ -67,13 +67,10 @@ _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 REPO_DIR=$(git rev-parse --show-toplevel)
 cd "${REPO_DIR}"
 
-################################################################################
 # Local configurations
-
-# If the tweak need quotes
-VS_TWEAK_QUOTES=""; # no quotes
-#VS_TWEAK_QUOTES="S"; # signal quotes
-#VS_TWEAK_QUOTES="D"; # double quotes
+################################################################################
+# Version File, Auto Update, full path
+VS_VFILE="${REPO_DIR}/scripts/version";
 
 ##########################
 # Release Version Search #
@@ -82,54 +79,44 @@ VS_TWEAK_QUOTES=""; # no quotes
 # - The MAJOR, MINOR, PATCH must consit of numbers of [0-9]
 # - TWEAK is pre-release part, consist of [a-z0-9.-]
 # Each line must has one, like the following
-#    MY_VERSION_MAJOR
-#    MY_VERSION_MINOR
-#    MY_VERSION_PATCH
-#    MY_VERSION_TWEAK
-###########################
-# Example of C/C++ header #
-###########################
-#define MY_VERSION_MAJOR 1     # Can not ignore, must be 0 ~ 9
-#define MY_VERSION_MINOR 2     # Can not ignore, must be 0 ~ 9
-#define MY_VERSION_PATCH 3     # Can not ignore, must be 0 ~ 9
-#define MY_VERSION_TWEAK "pre" # Can be ignored, consist of [a-z0-9.-]
-#
-# Version search file, full path
-if false; then
-VS_VFILE="${REPO_DIR}/version.h";
+#    MY_VERSION_MAJOR   Can not ignore, must be 0 ~ 9
+#    MY_VERSION_MINOR   Can not ignore, must be 0 ~ 9
+#    MY_VERSION_PATCH   Can not ignore, must be 0 ~ 9
+#    MY_VERSION_TWEAK   Can be ignored, consist of [a-z0-9.-]
+
+if true; then # Example 6
 VS_MAJOR="#define MY_VERSION_MAJOR";
 VS_MINOR="#define MY_VERSION_MINOR";
 VS_PATCH="#define MY_VERSION_PATCH";
 VS_TWEAK="#define MY_VERSION_TWEAK";
 fi
-#
-#############################
-# Example of CMakeLists.txt #
-#############################
-#set(MY_VERSION_MAJOR 0)       # Can not ignore, must be 0 ~ 9
-#set(MY_VERSION_MINOR 0)       # Can not ignore, must be 0 ~ 9
-#set(MY_VERSION_PATCH 6)       # Can not ignore, must be 0 ~ 9
-#set(MY_VERSION_TWEAK pre)     # Can be ignored, consist of [a-z0-9.-]
-#
-# Version search file, full path
-if false; then
-VS_VFILE="${REPO_DIR}/CMakeLists.txt";
+
+if true; then # Example 7
+VS_MAJOR="int MY_VERSION_MAJOR =";
+VS_MINOR="int MY_VERSION_MINOR =";
+VS_PATCH="int MY_VERSION_PATCH =";
+fi
+
+if true; then # Example 8
+VS_MAJOR="const char *MY_VERSION_MAJOR =";
+VS_MINOR="const char *MY_VERSION_MINOR =";
+VS_PATCH="const char *MY_VERSION_PATCH =";
+VS_TWEAK="const char *MY_VERSION_TWEAK =";
+fi
+
+if true; then # Example 9
 VS_MAJOR="set(MY_VERSION_MAJOR";
 VS_MINOR="set(MY_VERSION_MINOR";
 VS_PATCH="set(MY_VERSION_PATCH";
 VS_TWEAK="set(MY_VERSION_TWEAK";
 fi
-#
-#########################
-# Example of Other Type #
-#########################
-# Version search file, must be file in repo
+
 if true; then
 VS_VFILE="${REPO_DIR}/.version";
-VS_MAJOR="MY_VERSION_MAJOR"; # Can not ignore, must be 0 ~ 9
-VS_MINOR="MY_VERSION_MINOR"; # Can not ignore, must be 0 ~ 9
-VS_PATCH="MY_VERSION_PATCH"; # Can not ignore, must be 0 ~ 9
-VS_TWEAK="MY_VERSION_TWEAK"; # Can be ignored, consist of [a-z0-9.-]
+VS_MAJOR="MY_VERSION_MAJOR";
+VS_MINOR="MY_VERSION_MINOR";
+VS_PATCH="MY_VERSION_PATCH";
+VS_TWEAK="MY_VERSION_TWEAK";
 fi
 ################################################################################
 
@@ -202,23 +189,39 @@ The TWEAK format as following, like:
     ${SRLC_FMTB}
     ${SRLC_FMTC}";
 
+if [ "$(echo "${VS_MAJOR}" | grep '*')" != "" ]; then
+    VS_MAJOR=$(echo "${VS_MAJOR}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
+fi
+
+if [ "$(echo "${VS_MINOR}" | grep '*')" != "" ]; then
+    VS_MINOR=$(echo "${VS_MINOR}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
+fi
+
+if [ "$(echo "${VS_PATCH}" | grep '*')" != "" ]; then
+    VS_PATCH=$(echo "${VS_PATCH}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
+fi
+
+if [ "$(echo "${VS_TWEAK}" | grep '*')" != "" ]; then
+    VS_TWEAK=$(echo "${VS_TWEAK}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
+fi
+
 # Escape meta-char for RegExp
 #   (   =>  \(
 # space =>  \s+
 _VS_MAJOR_=$(echo "${VS_MAJOR}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
 _VS_MINOR_=$(echo "${VS_MINOR}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
 _VS_PATCH_=$(echo "${VS_PATCH}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
 _VS_TWEAK_=$(echo "${VS_TWEAK}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) sub(/ /,"\s+",$1) { print $1; }');
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
 
 # Version RegExp Pattern
-REGEXP_MAJOR="^(${_VS_MAJOR_})\s+\\\"*'*([0-9]+)'*\\\"*\s*(.*)$";
-REGEXP_MINOR="^(${_VS_MINOR_})\s+\\\"*'*([0-9]+)'*\\\"*\s*(.*)$";
-REGEXP_PATCH="^(${_VS_PATCH_})\s+\\\"*'*([0-9]+)'*\\\"*\s*(.*)$";
-REGEXP_TWEAK="^(${_VS_TWEAK_})\s*\\\"*'*([0-9a-z\.-]+)*'*\\\"*\s*(.*)$";
+REGEXP_MAJOR="^(${_VS_MAJOR_}\s+\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
+REGEXP_MINOR="^(${_VS_MINOR_}\s+\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
+REGEXP_PATCH="^(${_VS_PATCH_}\s+\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
+REGEXP_TWEAK="^(${_VS_TWEAK_}\s+\\\"*'*)([0-9a-z\.-]+)*('*\\\"*\s*.*)$";
 debugMsg "$(keyMsg RegExp Major): [$(valMsg ${REGEXP_MAJOR})]";
 debugMsg "$(keyMsg RegExp Minor): [$(valMsg ${REGEXP_MINOR})]";
 debugMsg "$(keyMsg RegExp Patch): [$(valMsg ${REGEXP_PATCH})]";
@@ -582,32 +585,10 @@ infoMsg "Release tweak: $(valMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
 
 if ${AUTO_BUMP_SEMVER}; then
     # Update Version
-    ${_sed} -i.bk "s/${REGEXP_MAJOR}/\1 ${VERSION_MAJOR}\3/" ${VS_VFILE};
-    ${_sed} -i.bk "s/${REGEXP_MINOR}/\1 ${VERSION_MINOR}\3/" ${VS_VFILE};
-    ${_sed} -i.bk "s/${REGEXP_PATCH}/\1 ${VERSION_PATCH}\3/" ${VS_VFILE};
-
-    case "${VS_TWEAK_QUOTES}" in
-    "S")
-        if [ -z "${VERSION_TWEAK}" ]; then
-            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1''\3/" ${VS_VFILE}; # empty tweak
-        else
-            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 '${VERSION_TWEAK}'\3/" ${VS_VFILE};
-        fi
-        ;;
-    "D")
-        if [ -z "${VERSION_TWEAK}" ]; then
-            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1\"\"\3/" ${VS_VFILE}; # empty tweak
-        else
-            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 \"${VERSION_TWEAK}\"\3/" ${VS_VFILE};
-        fi
-        ;;
-    *)
-        if [ -z "${VERSION_TWEAK}" ]; then
-            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1\3/" ${VS_VFILE}; # empty tweak
-        else
-            ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1 ${VERSION_TWEAK}\3/" ${VS_VFILE};
-        fi
-    esac
+    ${_sed} -i.bk "s/${REGEXP_MAJOR}/\1${VERSION_MAJOR}\3/" ${VS_VFILE};
+    ${_sed} -i.bk "s/${REGEXP_MINOR}/\1${VERSION_MINOR}\3/" ${VS_VFILE};
+    ${_sed} -i.bk "s/${REGEXP_PATCH}/\1${VERSION_PATCH}\3/" ${VS_VFILE};
+    ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1${VERSION_TWEAK}\3/" ${VS_VFILE};
 
     rm ${VS_VFILE}.bk;
 fi

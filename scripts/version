@@ -40,3 +40,41 @@ const String MY_SVN_MODIFY_TIME    = "3649-23-45 45:45:04 +0845" /// this is mod
 const  String MY_SVN_REPO_REVERSION =  "012" // this is svn repo reversion
 // any thing is ok
 const  String  MY_SVN_MODIFY_TIME   =  "3649-23-45 45:45:04 +0845" /// this is modify time date
+
+# GIT Info
+# - Major, Minor, Patch, Tweak
+# - Filter git-log to generate changelog.md template
+# - Filter git-tag and use standard-release to auto next version
+################################################################################
+# example 6
+#define MY_VERSION_MAJOR    11
+#define MY_VERSION_MAJOR    '11'
+#define MY_VERSION_MINOR    22
+#define MY_VERSION_MINOR    "22"
+#define MY_VERSION_PATCH    33
+#define MY_VERSION_TWEAK    alpha
+#define MY_VERSION_TWEAK    "alpha"
+
+--------------------------------------------------------------------------------
+# example 7
+int MY_VERSION_MAJOR = 101; // major
+int MY_VERSION_MINOR = 202; // minor
+int MY_VERSION_PATCH = 303; // patch
+
+--------------------------------------------------------------------------------
+# example 8
+const char *MY_VERSION_MAJOR = "10";
+const char *MY_VERSION_MINOR = "20";
+const char *MY_VERSION_PATCH = "30";
+const char *MY_VERSION_TWEAK = "beta.9";
+
+--------------------------------------------------------------------------------
+# example 9
+set(MY_VERSION_MAJOR 01)
+set(MY_VERSION_MINOR 02)
+set(MY_VERSION_PATCH 03)
+set(MY_VERSION_TWEAK beta.15)
+set(MY_VERSION_MAJOR "01")
+set(MY_VERSION_MINOR "02")
+set(MY_VERSION_PATCH "03")
+set(MY_VERSION_TWEAK "beta.15")
