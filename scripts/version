@@ -1,52 +1,37 @@
-# SVN Info
-# - SVN Repo Reversion
-# - SVN Sub Path Reversion
-# - SVN Remote Repo URL
-# - SVN Sub Path Modify Date Time
+################################################################################
+# Repo Info
+# - URL, HASH, Modify DateTime
+# -
 ################################################################################
 # example 1
-MY_SVN_SUB_REVERSION    3256 # this is svn sub path reversion
-// any thing is ok
-MY_SVN_REPO_REVERSION   012 // this is svn repo reversion
-MY_SVN_REPO_URL         "svn://abc/def/xyz"
-MY_SVN_REPO_URL         "http://abc/def/xyz"
-MY_SVN_REPO_URL         "https://abc/def/xyz"
-MY_SVN_MODIFY_TIME      3649-23-45 45:45:04 +0845
+#define MY_REPO_URL     "git@github.com:abc/def.git"
+#define MY_REPO_URL     "http://abc/def/xyz"
+#define MY_REPO_URL     "https://abc/def/xyz"
+#define MY_REPO_URL     "https://abc/def/xyz.git"
+#define MY_REPO_HASH     123 // repo reversion hash
+#define MY_REPO_HASH    "123" // repo reversion hash
+#define MY_MODIFY_TIME   3649-23-45 45:45:04 +0845
+#define MY_MODIFY_TIME  "3649-23-45 45:45:04 +0845"
 
 --------------------------------------------------------------------------------
 # example 2
-const int MY_SVN_SUB_REVERSION = 3256 # this is svn sub path reversion
-const int MY_SVN_REPO_REVERSION = 012 // this is svn repo reversion
-// any thing is ok
-const char *MY_SVN_REPO_URL = "svn://abc/def/xyz"
-const char * MY_SVN_MODIFY_TIME = "3649-23-45 45:45:04 +0845" /// this is modify time date
+const char *MY_REPO_URL = "svn://abc/def/xyz";
+const char *MY_REPO_HASH = "123abc";
+const char * MY_MODIFY_TIME = "3649-23-45 45:45:04 +0845"; /// this is modify time date
 
 --------------------------------------------------------------------------------
 # example 3
-const char MY_SVN_SUB_REVERSION = '3256' # this is svn sub path reversion
-const char MY_SVN_REPO_REVERSION = '012' // this is svn repo reversion
-const String MY_SVN_REPO_URL = "http://abc/def/xyz"
+const String MY_REPO_URL = "http://abc/def/xyz"
+const String MY_REPO_HASH = "123456";
+const String MY_MODIFY_TIME = "3649-23-45 50:50:04 +0845";
 
---------------------------------------------------------------------------------
-# example 4
-const String MY_SVN_SUB_REVERSION  = "3256" # this is svn sub path reversion
-const String MY_SVN_REPO_REVERSION = "012" // this is svn repo reversion
-// any thing is ok
-const String MY_SVN_MODIFY_TIME    = "3649-23-45 45:45:04 +0845" /// this is modify time date
-
---------------------------------------------------------------------------------
-# example 5
- const String MY_SVN_SUB_REVERSION  =  "3256" # this is svn sub path reversion
-const  String MY_SVN_REPO_REVERSION =  "012" // this is svn repo reversion
-// any thing is ok
-const  String  MY_SVN_MODIFY_TIME   =  "3649-23-45 45:45:04 +0845" /// this is modify time date
-
-# GIT Info
+################################################################################
+# Git Semver
 # - Major, Minor, Patch, Tweak
 # - Filter git-log to generate changelog.md template
 # - Filter git-tag and use standard-release to auto next version
 ################################################################################
-# example 6
+# example 4
 #define MY_VERSION_MAJOR    11
 #define MY_VERSION_MAJOR    '11'
 #define MY_VERSION_MINOR    22
@@ -56,20 +41,20 @@ const  String  MY_SVN_MODIFY_TIME   =  "3649-23-45 45:45:04 +0845" /// this is m
 #define MY_VERSION_TWEAK    "alpha"
 
 --------------------------------------------------------------------------------
-# example 7
+# example 5
 int MY_VERSION_MAJOR = 101; // major
 int MY_VERSION_MINOR = 202; // minor
 int MY_VERSION_PATCH = 303; // patch
 
 --------------------------------------------------------------------------------
-# example 8
+# example 6
 const char *MY_VERSION_MAJOR = "10";
 const char *MY_VERSION_MINOR = "20";
 const char *MY_VERSION_PATCH = "30";
 const char *MY_VERSION_TWEAK = "beta.9";
 
 --------------------------------------------------------------------------------
-# example 9
+# example 7
 set(MY_VERSION_MAJOR 01)
 set(MY_VERSION_MINOR 02)
 set(MY_VERSION_PATCH 03)

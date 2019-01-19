@@ -67,6 +67,14 @@ _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 REPO_DIR=$(git rev-parse --show-toplevel)
 cd "${REPO_DIR}"
 
+#####################################
+# Import normal shell function-util #
+# - IS_DEBUG_MODE=true;             #
+# - IS_VERBOSE_MODE=true;           #
+#####################################
+source ${REPO_DIR}/scripts/utils.sh;
+IS_DEBUG_MODE=false;
+
 # Local configurations
 ################################################################################
 # Version File, Auto Update, full path
@@ -84,27 +92,27 @@ VS_VFILE="${REPO_DIR}/scripts/version";
 #    MY_VERSION_PATCH   Can not ignore, must be 0 ~ 9
 #    MY_VERSION_TWEAK   Can be ignored, consist of [a-z0-9.-]
 
-if true; then # Example 6
+if true; then # Example 4
 VS_MAJOR="#define MY_VERSION_MAJOR";
 VS_MINOR="#define MY_VERSION_MINOR";
 VS_PATCH="#define MY_VERSION_PATCH";
 VS_TWEAK="#define MY_VERSION_TWEAK";
 fi
 
-if true; then # Example 7
+if true; then # Example 5
 VS_MAJOR="int MY_VERSION_MAJOR =";
 VS_MINOR="int MY_VERSION_MINOR =";
 VS_PATCH="int MY_VERSION_PATCH =";
 fi
 
-if true; then # Example 8
+if true; then # Example 6
 VS_MAJOR="const char *MY_VERSION_MAJOR =";
 VS_MINOR="const char *MY_VERSION_MINOR =";
 VS_PATCH="const char *MY_VERSION_PATCH =";
 VS_TWEAK="const char *MY_VERSION_TWEAK =";
 fi
 
-if true; then # Example 9
+if true; then # Example 7
 VS_MAJOR="set(MY_VERSION_MAJOR";
 VS_MINOR="set(MY_VERSION_MINOR";
 VS_PATCH="set(MY_VERSION_PATCH";
@@ -119,14 +127,6 @@ VS_PATCH="MY_VERSION_PATCH";
 VS_TWEAK="MY_VERSION_TWEAK";
 fi
 ################################################################################
-
-#####################################
-# Import normal shell function-util #
-# - IS_DEBUG_MODE=true;             #
-# - IS_VERBOSE_MODE=true;           #
-#####################################
-source ${REPO_DIR}/scripts/utils.sh;
-IS_DEBUG_MODE=false;
 
 if [ ! -f ${VS_VFILE} ]; then
     errMsg "Do not exits $(keyMsg ${VS_VFILE})";
