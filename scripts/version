@@ -12,18 +12,33 @@
 #define MY_REPO_HASH    "123" // repo reversion hash
 #define MY_MODIFY_TIME   3649-23-45 45:45:04 +0845
 #define MY_MODIFY_TIME  "3649-23-45 45:45:04 +0845"
+#define MY_BUILD_USER   "xx <xx@xx.com>"
+#define MY_BUILD_TIME   "1987-05-13 20:32:56 +8123"
+#define MY_HOST_NAME    "os-name"
+#define MY_HOST_USER    "os.user-name"
+#define MY_HOST_OSNV    "os.system_version"
 
 --------------------------------------------------------------------------------
 # example 2
 const char *MY_REPO_URL = "svn://abc/def/xyz";
 const char *MY_REPO_HASH = "123abc";
 const char * MY_MODIFY_TIME = "3649-23-45 45:45:04 +0845"; /// this is modify time date
+const char *MY_BUILD_USER = "xx <xx@xx.com>";
+const char *MY_BUILD_TIME =  "1987-05-13 20:32:56 +8123";
+const char *MY_HOST_NAME = "os-name";
+const char *MY_HOST_USER = "os.user-name";
+const char *MY_HOST_OSNV = "os.system_version";
 
 --------------------------------------------------------------------------------
 # example 3
-const String MY_REPO_URL = "http://abc/def/xyz"
-const String MY_REPO_HASH = "123456";
-const String MY_MODIFY_TIME = "3649-23-45 50:50:04 +0845";
+const String MY_REPO_URL = "git@gitlab.com:abc/def.git";
+const String MY_REPO_HASH = "14ab478abf";
+const String MY_MODIFY_TIME = "2019-01-20 13:46:14 +0800";
+const String MY_BUILD_USER = "xx <xx@xx.com>";
+const String MY_BUILD_TIME = "1987-05-13 20:32:56 +8123"
+const String MY_HOST_NAME = "os-name";
+const String MY_HOST_USER = "os.user-name";
+const String MY_HOST_OSNV = "os.system_version";
 
 ################################################################################
 # Git Semver

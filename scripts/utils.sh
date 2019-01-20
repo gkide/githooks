@@ -1,5 +1,89 @@
 #!/usr/bin/env bash
 
+# Build PC host name
+function getHostName()
+{
+    echo "$(hostname)";
+    return 0;
+}
+
+# Build PC host user
+function getHostUser()
+{
+    echo "$(whoami)";
+    return 0;
+}
+
+# Build PC OS name & version
+function getHostOSNV()
+{
+    local _os_name="$(lsb_release -i | awk -F':' 'gsub(/\t/,"",$2) gsub(/ /,"",$2) { print $2; }')";
+    local _os_version="$(lsb_release -r | awk -F':' 'gsub(/\t/,"",$2) gsub(/ /,"",$2) { print $2; }')";
+    echo "${_os_name} ${_os_version}";
+    return 0;
+}
+
+# Build Timestamp
+function getBuildTime()
+{
+    # 2019-01-19T09:48:11,404792987+08:00
+    local _ymd="$(date --iso-8601=ns | awk -F'T' '{ print $1; }')"
+    local _hms="$(date --iso-8601=ns | awk -F'T' '{ print $2; }' | awk -F',' '{ print $1; }')"
+    local _zone="+$(date --iso-8601=ns | awk -F'+' '{ print $2; }' | awk 'sub(/:/,"",$1) { print $1; }')"
+    echo ""${_ymd} ${_hms} ${_zone}"";
+    return 0;
+}
+
+########################
+# detect supported VCS #
+########################
+
+function __supportedVCS()
+{
+    case "$1" in
+    "GIT" | "Git" | "git")
+        echo "GIT";
+        ;;
+    "SVN" | "Svn" | "svn")
+        echo "SVN";
+        ;;
+    *)
+        echo "UNKNOWN";
+        ;;
+    esac
+}
+
+function __guessVCS()
+{
+    if [ -d ${PWD}/.git ]; then
+        echo "GIT"; return 0;
+    fi
+
+    if [ -d ${PWD}/.svn ]; then
+        echo "SVN"; return 0;
+    fi
+
+    echo "UNKNOWN"; return 0;
+}
+
+function getSupportedVCS()
+{
+    local rev_val="$(__supportedVCS $1)";
+    if [ "${rev_val}" != "UNKNOWN" ]; then
+        echo "${rev_val}"; return 0;
+    fi
+    rev_val="$(__guessVCS)";
+    echo "${rev_val}"; return 0;
+}
+
+# Example Usage
+function usage_example_VCS()
+{
+    local repo_vcs=$(getSupportedVCS "auto");
+    repo_vcs=$(getSupportedVCS 'git');
+    repo_vcs=$(getSupportedVCS 'svn');
+}
+
 ########################
 # detect platform type #
 ########################
@@ -111,7 +195,7 @@ function usage_example_colorMsgAPIs()
 # IS Functions #
 ################
 
-function isYes
+function isYes()
 {
     case "$*" in
     "Y" | "y" | "YES" | "Yes" | "yes")
@@ -121,7 +205,7 @@ function isYes
     esac
 }
 
-function isNo
+function isNo()
 {
     case "$*" in
     "" | "N" | "n" | "NO" | "No" | "no")
@@ -131,7 +215,7 @@ function isNo
     esac
 }
 
-function isTrue
+function isTrue()
 {
     case "$*" in
     "1" | "T" | "t" | "TRUE" | "True" | "true")
@@ -141,7 +225,7 @@ function isTrue
     esac
 }
 
-function isFalse
+function isFalse()
 {
     case "$*" in
     "" | "0" | "F" | "f" | "FALSE" | "False" | "false")
@@ -151,7 +235,7 @@ function isFalse
     esac
 }
 
-function isOk
+function isOk()
 {
     case "$*" in
     "OK" | "Ok" | "ok")
@@ -161,7 +245,7 @@ function isOk
     esac
 }
 
-function isError
+function isError()
 {
     case "$*" in
     "ERROR" | "Error" | "error" | "ERR" | "Err" | "err" | "")
@@ -171,7 +255,7 @@ function isError
     esac
 }
 
-function isSuccess
+function isSuccess()
 {
     case "$*" in
     "SUCCESS" | "Success" | "success" | "SUCC" | "Succ" | "succ")
@@ -184,7 +268,7 @@ function isSuccess
     esac
 }
 
-function isFailure
+function isFailure()
 {
     case "$*" in
     "FAILURE" | "Failure" | "failure" | "FAIL" | "Fail" | "fail" | "")
@@ -263,82 +347,82 @@ function usage_example_isAPIs()
 #####################
 # normal prompt msg #
 #####################
-function errMsg
+function errMsg()
 {
     [ -n "$*" ] && printf "$(msgRed ERROR): $*\n";
     return 1; # make sure return false
 }
 
-function errMsgL
+function errMsgL()
 {
     [ -n "$*" ] && printf "$(msgRed ERROR): $*";
     return 1; # make sure return false
 }
 
-function warnMsg
+function warnMsg()
 {
     [ -n "$*" ] && printf "$(msgBrown WARN): $*\n";
     return 0; # make sure return true
 }
 
-function warnMsgL
+function warnMsgL()
 {
     [ -n "$*" ] && printf "$(msgBrown WARN): $*";
     return 0; # make sure return true
 }
 
 
-function infoMsg
+function infoMsg()
 {
     [ -n "$*" ] && printf "$(msgBlue INFO): $*\n";
     return 0; # make sure return true
 }
 
-function infoMsgL
+function infoMsgL()
 {
     [ -n "$*" ] && printf "$(msgBlue INFO): $*";
     return 0; # make sure return true
 }
 
 IS_DEBUG_MODE=true;
-function debugMsg
+function debugMsg()
 {
     [ -n "$*" ] && ${IS_DEBUG_MODE} && printf "$(msgMagenta DEBUG): $*\n";
     return 0; # make sure return true
 }
 
-function debugMsgL
+function debugMsgL()
 {
     [ -n "$*" ] && ${IS_DEBUG_MODE} && printf "$(msgMagenta DEBUG): $*";
     return 0; # make sure return true
 }
 
 IS_VERBOSE_MODE=true;
-function verboseMsg
+function verboseMsg()
 {
     [ -n "$*" ] && ${IS_VERBOSE_MODE} && infoMsg "$*";
     return 0; # make sure return true
 }
 
-function verboseMsgL
+function verboseMsgL()
 {
     [ -n "$*" ] && ${IS_VERBOSE_MODE} && infoMsgL "$*";
     return 0; # make sure return true
 }
 
-function invalidArgs
+function invalidArgs()
 {
     [ -n "$*" ] && errMsg "Invalid arguments for $*";
     return 1; # make sure return false
 }
 
-function keyMsg
+function keyMsg()
 {
     [ -n "$*" ] && printf "$(msgBrown $*)";
     return 0; # make sure return true
 }
 
-function valMsg
+function valMsg()
 {
     [ -n "$*" ] && printf "$(msgGreen $*)";
     return 0; # make sure return true
@@ -364,7 +448,7 @@ function usage_example_msgAPIs()
 ###############
 # MIN/MAX/SUM #
 ###############
-function minNum
+function minNum()
 {
     _min_=${1};
     for i in $@; do
@@ -375,7 +459,7 @@ function minNum
     echo ${_min_};
 }
 
-function maxNum
+function maxNum()
 {
     _max_=${1};
     for i in $@; do
@@ -386,7 +470,7 @@ function maxNum
     echo ${_max_};
 }
 
-function sumNum
+function sumNum()
 {
     _sum_=0;
     for i in $@; do

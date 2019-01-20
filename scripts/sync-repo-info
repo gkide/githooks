@@ -7,40 +7,23 @@ set -u
 # Pipe fail if any one of the pipe command failed
 set -o pipefail
 
-function supportedVCS
-{
-    case "$1" in
-    "GIT" | "Git" | "git")
-        echo "GIT"
-        ;;
-    "SVN" | "Svn" | "svn")
-        echo "SVN"
-        ;;
-    *)
-        echo "UNKNOWN"
-        ;;
-    esac
-}
+# Current directory of full path with symbolic link resolved
+THIS_DIR="$(realpath ${0%/*})";
 
-function guessVCS
-{
-    if [ -d ${PWD}/.git ]; then
-        echo "GIT"; return 0;
-    fi
+# Import normal shell function-util
+# - IS_DEBUG_MODE=true;
+# - IS_VERBOSE_MODE=true;
+source ${THIS_DIR}/utils.sh;
+IS_DEBUG_MODE=false;
 
-    if [ -d ${PWD}/.svn ]; then
-        echo "SVN"; return 0;
-    fi
-
-    echo "UNKNOWN"; return 0;
-}
+_sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 
 case "$#" in
     "0")
-        VCS="$(guessVCS)"
+        VCS="$(getSupportedVCS auto)"
         ;;
     "1")
-        VCS="$(supportedVCS $1)"
+        VCS="$(getSupportedVCS $1)"
         ;;
     *)
         VCS=""
@@ -48,78 +31,76 @@ case "$#" in
 esac
 
 if [ "${VCS}" != "GIT" -a "${VCS}" != "SVN" ]; then
-    echo "Usage: ${0##*/} [svn|Svn|SVN|git|Git|GIT]"
+    infoMsg "Usage: ${0##*/} [svn|Svn|SVN|git|Git|GIT]";
     exit 1;
 fi
 
 [ "${VCS}" = "SVN" -a ! -d ${PWD}/.svn ] \
-    && echo "ERROR: repo is not SVN" && exit 1;
+    && errMsg "Repo is not SVN";
 [ "${VCS}" = "GIT" -a ! -d ${PWD}/.git ] \
-    && echo "ERROR: repo is not GIT" && exit 1;
-
-_sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
-
-[ "${VCS}" = "SVN" ] && {
-    REPO_URL=$(svn info | grep "Repository Root:" | awk '{ print $3; }')
-    REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }')
-    REPO_SUB_DIR=$(svn info | grep "Relative URL:" \
-        | awk 'sub(/\^\//,"",$3) sub(/\^\\/,"",$3) { print $3; }')
-    [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="$PWD"
-
-    REPO_HASH=$(svn info | grep "Revision:" | awk '{ print $2; }')
-    SVN_SUB_HASH=$(svn info | grep "Last Changed Rev:" | awk '{ print $4; }')
-    REPO_HASH="${REPO_HASH}.${SVN_SUB_HASH}"
-
-    REPO_MODIFY_TIME=$(svn info | grep "Last Changed Date:" \
-        | awk '{ print $4, $5, $6; }')
-}
-
-[ "${VCS}" = "GIT" ] && {
-    REPO_URL=$(git remote -v | grep "origin" | awk '{ print $2; }' | head -n 1)
-    REPO_SUB_DIR="$PWD"
-    REPO_DIR=$(git rev-parse --show-toplevel)
-    REPO_SUB_DIR="${REPO_SUB_DIR##${REPO_DIR}}"
-    [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="${REPO_DIR}"
-
-    REPO_HASH=$(git log --oneline -1 | awk '{ print $1; }')
-    REPO_MODIFY_TIME=$(git log -1 --date=iso8601 | grep "Date:" \
-        | awk '{ print $2, $3, $4; }')
-}
+    && errMsg "Repo is not GIT";
 
 ######################################################################
+# Repo root directory, full path
+REPO_DIR="$(realpath ${THIS_DIR}/..)";
 # Version file to auto sync SVN repo info
-VS_VFILE="${REPO_DIR}/scripts/version"
-
-# Import normal shell function-util
-# - IS_DEBUG_MODE=true;
-# - IS_VERBOSE_MODE=true;
-source ${REPO_DIR}/scripts/utils.sh;
-IS_DEBUG_MODE=false;
+VS_VFILE="${THIS_DIR}/version";
 
 if true; then # Example 1
 # Remote repo URL, for example
 # - "svn://localhost/abc"
 # - "http://localhost/abc.git"
 VS_REPO_URL="#define MY_REPO_URL"
-# Must be consist of [0-9a-z.]
+# The repo hash
+# - GIT: it is the 7-chars short SHA
+# - SVN: it is the reversion number
 VS_REPO_HASH="#define MY_REPO_HASH"
-# iso8601: "2019-01-19 01:00:52 +0800"
+# The repo last modification time
+# ISO8601: "2019-01-19 01:00:52 +0800"
 VS_MODIFY_TIME="#define MY_MODIFY_TIME"
+
+# Must be consist of [0-9A-Za-z.- ]
+# The format is: USER_NAME <USER_EMAIL>
+# - GIT: USER_NAME/USER_EMAIL the same as 'git config'
+# - SVN: USER_NAME auto get from 'svn log', USER_EMAIL set by hand below
+VS_BUILD_USER="#define MY_BUILD_USER"
+# The current build time, format is ISO8601
+VS_BUILD_TIME="#define MY_BUILD_TIME"
+
+# The build host name
+VS_HOST_NAME="#define MY_HOST_NAME"
+# The build host user name
+VS_HOST_USER="#define MY_HOST_USER"
+# The build host system name and version
+VS_HOST_OSNV="#define MY_HOST_OSNV"
 fi
 
 if true; then # Example 2
 VS_REPO_URL="const char *MY_REPO_URL ="
 VS_REPO_HASH="const char *MY_REPO_HASH ="
 VS_MODIFY_TIME="const char * MY_MODIFY_TIME ="
+
+VS_BUILD_USER="const char *MY_BUILD_USER ="
+VS_BUILD_TIME="const char *MY_BUILD_TIME ="
+
+VS_HOST_NAME="const char *MY_HOST_NAME ="
+VS_HOST_USER="const char *MY_HOST_USER ="
+VS_HOST_OSNV="const char *MY_HOST_OSNV ="
 fi
 
 if true; then # Example 3
 VS_REPO_URL="const String MY_REPO_URL ="
 VS_REPO_HASH="const String MY_REPO_HASH ="
 VS_MODIFY_TIME="const String MY_MODIFY_TIME ="
+
+VS_BUILD_USER="const String MY_BUILD_USER ="
+VS_BUILD_TIME="const String MY_BUILD_TIME ="
+
+VS_HOST_NAME="const String MY_HOST_NAME ="
+VS_HOST_USER="const String MY_HOST_USER ="
+VS_HOST_OSNV="const String MY_HOST_OSNV ="
 fi
 ######################################################################
-
 if [ ! -f ${VS_VFILE} ]; then
     errMsg "Do not exits $(keyMsg ${VS_VFILE})";
 fi
@@ -133,13 +114,67 @@ if [ "${isRepoFile}" = "${fullPath}" ]; then
 fi
 VS_VFILE=${isRepoFile}; # Relative path of repo
 
+[ "${VCS}" = "SVN" ] && {
+    REPO_URL=$(svn info | grep "Repository Root:" | awk '{ print $3; }')
+    __REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }')
+    REPO_SUB_DIR=$(svn info | grep "Relative URL:" \
+        | awk 'sub(/\^\//,"",$3) sub(/\^\\/,"",$3) { print $3; }')
+    [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="$PWD"
+
+    REPO_HASH=$(svn info | grep "Revision:" | awk '{ print $2; }')
+    SVN_SUB_HASH=$(svn info | grep "Last Changed Rev:" | awk '{ print $4; }')
+    if [ "${REPO_HASH}" != "${SVN_SUB_HASH}" ]; then
+        REPO_HASH="${REPO_HASH}.${SVN_SUB_HASH}"
+    fi
+
+    REPO_MODIFY_TIME=$(svn info | grep "Last Changed Date:" \
+        | awk '{ print $4, $5, $6; }')
+
+    USER_EMAIL="YOUR_EMAIL_BY_HAND"
+    SVN_LOGMSG=$(svn log)
+    SVN_LOGMSG=$(echo "${SVN_LOGMSG}" | head -n 2 | tail -n 1)
+    USER_NAME=$(echo "${SVN_LOGMSG}" | awk -F'|' 'gsub(/ /,"",$2) { print $2; }')
+}
+
+[ "${VCS}" = "GIT" ] && {
+    USER_NAME="$(git config user.name)"
+    USER_EMAIL="$(git config user.email)"
+    REPO_URL=$(git remote -v | grep "origin" | awk '{ print $2; }' | head -n 1)
+    REPO_SUB_DIR="$PWD"
+    __REPO_DIR=$(git rev-parse --show-toplevel)
+    REPO_SUB_DIR="${REPO_SUB_DIR##${REPO_DIR}}"
+    [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="${REPO_DIR}"
+
+    REPO_HASH=$(git log --oneline -1 | awk '{ print $1; }')
+    REPO_MODIFY_TIME=$(git log -1 --date=iso8601 | grep "Date:" \
+        | awk '{ print $2, $3, $4; }')
+}
+
+[ "${__REPO_DIR}" != "${REPO_DIR}" ] \
+    && errMsg "Repo directory not equal
+    USER: $(valMsg ${REPO_DIR})
+    AUTO: $(keyMsg ${__REPO_DIR})"
+
+HOST_USER="$(getHostUser)";
+HOST_NAME="$(getHostName)";
+HOST_OSNV="$(getHostOSNV)";
+
+BUILD_TIME="$(getBuildTime)";
+BUILD_USER="${USER_NAME} <${USER_EMAIL}>";
+
+infoMsg "----------------------------------------------------------------";
+infoMsg "$(keyMsg ${VCS}): Build host info: $(valMsg ${HOST_USER}) at $(valMsg ${HOST_NAME}) of $(valMsg ${HOST_OSNV})";
+infoMsg "----------------------------------------------------------------";
+infoMsg "$(keyMsg ${VCS}): Build By: $(valMsg ${BUILD_USER})";
+infoMsg "$(keyMsg ${VCS}): Build Time: $(valMsg ${BUILD_TIME})";
+infoMsg "----------------------------------------------------------------";
 infoMsg "$(keyMsg ${VCS}): Local Repo: $(valMsg ${REPO_DIR})";
 infoMsg "$(keyMsg ${VCS}): Remote Repo: $(valMsg ${REPO_URL})";
 infoMsg "$(keyMsg ${VCS}): Working Path: $(valMsg ${REPO_SUB_DIR})";
-infoMsg "-------------------------------------------------";
-infoMsg "$(keyMsg ${VCS}): Repo Hash: $(valMsg ${REPO_HASH})";
-infoMsg "$(keyMsg ${VCS}): Timestamp: $(valMsg ${REPO_MODIFY_TIME})";
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
+infoMsg "$(keyMsg ${VCS}): Repo Commit Hash: $(valMsg ${REPO_HASH})";
+infoMsg "$(keyMsg ${VCS}): Repo Last Modify Time: $(valMsg ${REPO_MODIFY_TIME})";
+infoMsg "----------------------------------------------------------------";
 
 # Escape meta-char for RegExp
 #   (   =>  \(
@@ -151,13 +186,21 @@ _VS_MODIFY_TIME_=$(echo "${VS_MODIFY_TIME}" \
 _VS_REPO_HASH_=$(echo "${VS_REPO_HASH}" \
     | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) { print $1; }');
 
-# RegExp Pattern: URL
-URL_A="((http:\/\/)|(https:\/\/)|(svn:\/\/)|(git@))"
-URL_B="[0-9A-Za-z_@:\\\\\/\.-]+"
-REGEXP_REPO_URL="^(${_VS_REPO_URL_}\s+\\\")(${URL_A}${URL_B})(\\\"\s*.*)$";
+_VS_BUILD_USER_=$(echo "${VS_BUILD_USER}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) { print $1; }');
+_VS_BUILD_TIME_=$(echo "${VS_BUILD_TIME}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) { print $1; }');
+
+_VS_HOST_NAME_=$(echo "${VS_HOST_NAME}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) { print $1; }');
+_VS_HOST_USER_=$(echo "${VS_HOST_USER}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) { print $1; }');
+_VS_HOST_OSNV_=$(echo "${VS_HOST_OSNV}" \
+    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) { print $1; }');
 
 # RegExp Pattern: Hash
 REGEXP_REPO_HASH="^(${_VS_REPO_HASH_}\s+\\\"*)([0-9a-z\.]+)(\\\"*\s*.*)$";
+${_sed} -i.bk "s/${REGEXP_REPO_HASH}/\1${REPO_HASH}\3/" ${VS_VFILE};
 
 # RegExp Pattern: ISO-8601: 2019-01-19 01:00:52 +0800
 REGEXP_TMZ="[0-9]{4}"
@@ -165,13 +208,29 @@ REGEXP_YMD="[0-9]{4}-[0-9]{2}-[0-9]{2}"
 REGEXP_HMS="[0-9]{2}:[0-9]{2}:[0-9]{2}"
 REGEXP_DTZ="${REGEXP_YMD}\s+${REGEXP_HMS}\s+\+${REGEXP_TMZ}"
 REGEXP_MODIFY_TIME="^(${_VS_MODIFY_TIME_}\s+\\\"*)(${REGEXP_DTZ})(\\\"*\s*.*)$";
+${_sed} -i.bk "s/${REGEXP_MODIFY_TIME}/\1${REPO_MODIFY_TIME}\3/" ${VS_VFILE};
 
 _REPO_URL_=$(echo "${REPO_URL}" \
     | awk 'gsub(/\\/,"\\\\\\",$1) gsub(/\//,"\/",$1) gsub(/\./,"\.",$1) \
            gsub(/\-/,"\-",$1) gsub(/\:/,"\:",$1) { print $1; }');
-
+# RegExp Pattern: URL
+URL_A="((http:\/\/)|(https:\/\/)|(svn:\/\/)|(git@))"
+URL_B="[0-9A-Za-z_@:\\\\\/\.-]+"
+REGEXP_REPO_URL="^(${_VS_REPO_URL_}\s+\\\")(${URL_A}${URL_B})(\\\"\s*.*)$";
 ${_sed} -i.bk "s/${REGEXP_REPO_URL}/\1${_REPO_URL_}\8/" ${VS_VFILE};
-${_sed} -i.bk "s/${REGEXP_REPO_HASH}/\1${REPO_HASH}\3/" ${VS_VFILE};
-${_sed} -i.bk "s/${REGEXP_MODIFY_TIME}/\1${REPO_MODIFY_TIME}\3/" ${VS_VFILE};
+
+# RegExp Pattern: User Name & Email and build time
+REGEXP_BUILD_USER="^(${_VS_BUILD_USER_}\s+\\\"*)([0-9A-Za-z_\s\.-]*\s+<[0-9A-Za-z_\.]+@[A-Za-z\.]+>)(\\\"*\s*.*)$";
+REGEXP_BUILD_TIME="^(${_VS_BUILD_TIME_}\s+\\\"*)(${REGEXP_DTZ})(\\\"*\s*.*)$";
+${_sed} -i.bk "s/${REGEXP_BUILD_USER}/\1${BUILD_USER}\3/" ${VS_VFILE};
+${_sed} -i.bk "s/${REGEXP_BUILD_TIME}/\1${BUILD_TIME}\3/" ${VS_VFILE};
+
+# RegExp Pattern: host user, host name, host system name & version
+REGEXP_HOST_NAME="^(${_VS_HOST_NAME_}\s+\\\")([0-9A-Za-z_\s\.-]+)(\\\"\s*.*)$";
+REGEXP_HOST_USER="^(${_VS_HOST_USER_}\s+\\\")([0-9A-Za-z_\s\.-]+)(\\\"\s*.*)$";
+REGEXP_HOST_OSNV="^(${_VS_HOST_OSNV_}\s+\\\")([0-9A-Za-z_\s\.-]+)(\\\"\s*.*)$";
+${_sed} -i.bk "s/${REGEXP_HOST_NAME}/\1${HOST_NAME}\3/" ${VS_VFILE};
+${_sed} -i.bk "s/${REGEXP_HOST_USER}/\1${HOST_USER}\3/" ${VS_VFILE};
+${_sed} -i.bk "s/${REGEXP_HOST_OSNV}/\1${HOST_OSNV}\3/" ${VS_VFILE};
 
 rm -rf ${VS_VFILE}.bk
