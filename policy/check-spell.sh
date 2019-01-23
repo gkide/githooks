@@ -16,7 +16,7 @@ function check_spell()
 
     if [ ! -z "${warnings}" ] ; then
         echo >&2 "Possible spelling errors in the commit message:"
-        echo >&2 "    $(msg_red ${warnings})";
+        echo >&2 "    $(msgRed ${warnings})";
         return 1
     fi
 }

@@ -42,7 +42,7 @@ case "$COMMIT_SOURCE,$SHA1" in
 
     commit,*)
         # git commit --amend
-        # echo "do not $(msg_red amend) pushed commit."
+        # echo "do not $(msgRed amend) pushed commit."
         ;;
 
     message,*)
@@ -51,7 +51,7 @@ case "$COMMIT_SOURCE,$SHA1" in
 
     template,)
         # git commit
-        # echo "$(msg_red template): fill template commit message"
+        # echo "$(msgRed template): fill template commit message"
         # exit 1
         ;;
 

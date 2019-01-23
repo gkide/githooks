@@ -21,12 +21,12 @@ if [ "$allownonascii" != "true" ] &&
     test $(git diff --cached --name-only --diff-filter=A -z HEAD |
            LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
 then
-    echo "$(msg_red Error): Attempt to add a non-ASCII file name."
+    echo "$(msgRed Error): Attempt to add a non-ASCII file name."
     echo
     echo "This can cause problems if you want to work with people on other platforms."
     echo "To be portable it is advisable to rename the file."
     echo
     echo "If you know what you are doing you can disable this check using:"
-    echo "$ $(msg_red 'git config hooks.allownonascii true')"
+    echo "$ $(msgRed 'git config hooks.allownonascii true')"
     exit 1
 fi

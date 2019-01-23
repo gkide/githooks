@@ -34,7 +34,7 @@ case "${1}" in
         signingkey=$(git config --get user.signingkey)
         if [ "${signingkey}" = "" ]; then
             echo "Please set your GPG signingkey, run:"
-            echo "    $ $(msg_red 'git config --global user.signingkey <YourGpgKeyID>')"
+            echo "    $ $(msgRed 'git config --global user.signingkey <YourGpgKeyID>')"
             exit 1
         fi
 

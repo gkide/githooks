@@ -53,7 +53,7 @@ function backup_msg_exit()
         fi
     fi
 
-    echo "Cached commit message: $(msg_brown ${tmp_msg_file})"
+    echo "Cached commit message: $(msgBrown ${tmp_msg_file})"
     exit 1
 }
 
