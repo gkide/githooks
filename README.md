@@ -1,6 +1,16 @@
 # Githooks
 
-Those are the git hooks for local repo use, make it consistent and simple.
+![release](https://img.shields.io/github/release/gkide/githooks.svg)
+![latest](https://img.shields.io/github/tag-date/gkide/githooks.svg?colorB=orange)
+
+![top-language-rate](https://img.shields.io/github/languages/top/gkide/githooks.svg)
+![languages-count](https://img.shields.io/github/languages/count/gkide/githooks.svg)
+![code-size](https://img.shields.io/github/languages/code-size/gkide/githooks.svg)
+![downloads-count](https://img.shields.io/github/downloads/gkide/githooks/total.svg)
+![open-issues](https://img.shields.io/github/issues/gkide/githooks.svg)
+![open-pull-requests](https://img.shields.io/github/issues-pr/gkide/githooks.svg)
+
+The git hooks for local usage, make it consistent and simple.
 
 ## Recommend Usage
 
