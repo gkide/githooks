@@ -115,14 +115,16 @@ fi
 VS_VFILE=${isRepoFile}; # Relative path of repo
 
 [ "${VCS}" = "SVN" ] && {
-    REPO_URL=$(svn info | grep "Repository Root:" | awk '{ print $3; }')
+    # REPO_URL=$(svn info | grep "Repository Root:" | awk '{ print $3; }')
+    REPO_URL=$(svn info | grep "URL:" | head -n 1 | awk '{ print $2; }')
+    REPO_HASH=$(svn info | grep "Revision:" | awk '{ print $2; }')
+
     __REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }')
     REPO_SUB_DIR=$(svn info | grep "Relative URL:" \
         | awk 'sub(/\^\//,"",$3) sub(/\^\\/,"",$3) { print $3; }')
     [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="$PWD"
-
-    REPO_HASH=$(svn info | grep "Revision:" | awk '{ print $2; }')
     SVN_SUB_HASH=$(svn info | grep "Last Changed Rev:" | awk '{ print $4; }')
+
     if [ "${REPO_HASH}" != "${SVN_SUB_HASH}" ]; then
         REPO_HASH="${REPO_HASH}.${SVN_SUB_HASH}"
     fi
@@ -168,8 +170,8 @@ infoMsg "----------------------------------------------------------------";
 infoMsg "$(keyMsg ${VCS}): Build By: $(valMsg ${BUILD_USER})";
 infoMsg "$(keyMsg ${VCS}): Build Time: $(valMsg ${BUILD_TIME})";
 infoMsg "----------------------------------------------------------------";
+infoMsg "$(keyMsg ${VCS}): Remote URL: $(valMsg ${REPO_URL})";
 infoMsg "$(keyMsg ${VCS}): Local Repo: $(valMsg ${REPO_DIR})";
-infoMsg "$(keyMsg ${VCS}): Remote Repo: $(valMsg ${REPO_URL})";
 infoMsg "$(keyMsg ${VCS}): Working Path: $(valMsg ${REPO_SUB_DIR})";
 infoMsg "----------------------------------------------------------------";
 infoMsg "$(keyMsg ${VCS}): Repo Commit Hash: $(valMsg ${REPO_HASH})";
