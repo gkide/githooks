@@ -1,5 +1,49 @@
 #!/usr/bin/env bash
 
+#####################
+# programme Version #
+#####################
+
+# awk version
+function awkVersion()
+{
+    if $(awk -W version > /dev/null 2>&1); then
+        echo "$(awk -W version 2> /dev/null | awk '{ print $2; }')";
+        return 0;
+    fi
+
+    if $(awk --version > /dev/null 2>&1); then
+        echo "awk --version";
+        return 0;
+    fi
+
+    echo "";
+    return 0;
+}
+
+# date version
+function dateVersion()
+{
+    if $(date --version > /dev/null 2>&1); then
+        echo "$(date --version 2> /dev/null | head -n 1 | awk '{ print $4; }')";
+        return 0;
+    fi
+
+    echo "";
+    return 0;
+}
+
+# Example Usage
+function usage_example_prog_version()
+{
+    echo "awk version: $(awkVersion)";
+    echo "date version: $(dateVersion)";
+}
+
+##############
+# Build Info #
+##############
+
 # Build PC host name
 function getHostName()
 {
