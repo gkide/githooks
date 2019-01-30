@@ -101,19 +101,6 @@ VS_HOST_USER="const String MY_HOST_USER ="
 VS_HOST_OSNV="const String MY_HOST_OSNV ="
 fi
 ######################################################################
-if [ ! -f ${VS_VFILE} ]; then
-    errMsg "Do not exits $(keyMsg ${VS_VFILE})";
-fi
-
-# The version file should be one file of the repo subdirectory
-fullPath=$(realpath ${VS_VFILE});
-isRepoFile=${fullPath#${REPO_DIR}/};
-if [ "${isRepoFile}" = "${fullPath}" ]; then
-    errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
-       $(keyMsg ${REPO_DIR})";
-fi
-VS_VFILE=${isRepoFile}; # Relative path of repo
-
 [ "${VCS}" = "SVN" ] && {
     # REPO_URL=$(svn info | grep "Repository Root:" | awk '{ print $3; }')
     REPO_URL=$(svn info | grep "URL:" | head -n 1 | awk '{ print $2; }')
@@ -156,6 +143,19 @@ VS_VFILE=${isRepoFile}; # Relative path of repo
     && errMsg "Repo directory not equal
     USER: $(valMsg ${REPO_DIR})
     AUTO: $(keyMsg ${__REPO_DIR})"
+
+if [ ! -f ${VS_VFILE} ]; then
+    errMsg "Do not exits $(keyMsg ${VS_VFILE})";
+fi
+
+# The version file should be one file of the repo subdirectory
+fullPath=$(realpath ${VS_VFILE});
+isRepoFile=${fullPath#${REPO_DIR}/};
+if [ "${isRepoFile}" = "${fullPath}" ]; then
+    errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
+       $(keyMsg ${REPO_DIR})";
+fi
+VS_VFILE=${isRepoFile}; # Relative path of repo
 
 HOST_USER="$(getHostUser)";
 HOST_NAME="$(getHostName)";
