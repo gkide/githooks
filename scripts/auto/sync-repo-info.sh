@@ -5,7 +5,7 @@
 # - GIT: USER_NAME/USER_EMAIL the same as 'git config' if not set
 # - SVN: USER_NAME auto get from 'svn log', USER_EMAIL is empty by default
 #USER_NAME="my name"
-#USER_EMAIL="my email"
+#USER_EMAIL="email@my.com"
 
 # Repo root directory, full path
 REPO_DIR="$(git rev-parse --show-toplevel)";
