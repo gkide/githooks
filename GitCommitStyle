@@ -6,19 +6,23 @@
 # <HERE-SHOULD-BE-ONE-BLANK-LINE>
 # <optional-footer>
 # ------------------------------------------------------------------------------
-# break         User interface breaking changes
-# feat          Introduce or modify the codebase features
-# fix           A bug fix
-# wip           Working in process
-# ci            CI configuration changes
-# docs          Documentation changes
-# test          Adding new or correcting existing tests
-# perf          Code changes that improves the performance
-# build         Changes that do affect the build system
-# revert        Revert to a previous commit
-# refactor      Changes that neither fixes a bug nor adds a feature
-# style         Changes that do not affect the code meaning
-# chore         Other changes that don't modify src or test files
+# major, break, security, deprecated        Any incompatible changes
+# minor, feat, feature                      Backwards-compatible manner changes
+# patch, bugfix, fix,                       Any bug fixes
+#
+# perf              Code changes that improves the performance
+# revert            Revert to a previous commit
+# refactor          Changes that neither bugfix nor feature changes
+# preview, wip      Something working in process
+# build, deps       Changes about build system or external dependencies
+#
+# ci        CI configuration changes
+# docs      Documentation changes
+# test      Adding new or correcting existing tests
+# style     Changes that do not affect the code meaning
+# chore     Other changes that don't modify src or test files
+# skip      Skip commit style checking for some reason.
+#
 # ------------------------------------------------------------------------------
 # [CLOSE]               short description for the closed issue
 # [KNOWN ISSUE]         short description contains the known issue
