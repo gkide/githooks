@@ -18,11 +18,16 @@ IS_DEBUG_MODE=false;
 
 _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 
+USR_CONFIG=""
 case "$#" in
     "0")
         VCS="$(getSupportedVCS auto)"
         ;;
     "1")
+        VCS="$(getSupportedVCS $1)"
+        ;;
+    "2")
+        USR_CONFIG="$2"
         VCS="$(getSupportedVCS $1)"
         ;;
     *)
@@ -31,7 +36,7 @@ case "$#" in
 esac
 
 if [ "${VCS}" != "GIT" -a "${VCS}" != "SVN" ]; then
-    infoMsg "Usage: ${0##*/} [svn|Svn|SVN|git|Git|GIT]";
+    infoMsg "Usage: ${0##*/} [svn|Svn|SVN|git|Git|GIT] [Config-File]";
     exit 1;
 fi
 
@@ -58,16 +63,22 @@ fi
     REPO_MODIFY_TIME=$(svn info | grep "Last Changed Date:" \
         | awk '{ print $4, $5, $6; }')
 
-    USER_EMAIL="" # SVN should config by hand
+    __USER_EMAIL="" # SVN should config by hand
     SVN_LOGMSG=$(svn log)
     SVN_LOGMSG=$(echo "${SVN_LOGMSG}" | head -n 2 | tail -n 1)
-    USER_NAME=$(echo "${SVN_LOGMSG}" | awk -F'|' 'gsub(/ /,"",$2) { print $2; }')
+    __USER_NAME=$(echo "${SVN_LOGMSG}" | awk -F'|' 'gsub(/ /,"",$2) { print $2; }')
 }
 
 [ "${VCS}" = "GIT" ] && {
-    USER_NAME="$(git config user.name)"
-    USER_EMAIL="$(git config user.email)"
-    REPO_URL=$(git remote -v | grep "origin" | awk '{ print $2; }' | head -n 1)
+    __USER_NAME="$(git config user.name)"
+    __USER_EMAIL="$(git config user.email)"
+
+    if [ "$(git remote -v)" = "" ]; then
+        REPO_URL="" # remote url is not set
+    else
+        REPO_URL=$(git remote -v | head -n 1 | awk '{ print $2; }')
+    fi
+
     REPO_SUB_DIR="$PWD"
     __REPO_DIR=$(git rev-parse --show-toplevel)
     REPO_SUB_DIR="${REPO_SUB_DIR##${__REPO_DIR}}"
@@ -78,8 +89,23 @@ fi
         | awk '{ print $2, $3, $4; }')
 }
 
+# The default sync-repo-info configuration file
+if [ "${USR_CONFIG}" = "" ]; then
+    USR_CONFIG=${__REPO_DIR}/.sync-repo-info
+fi
+
+if [ ! -f "${USR_CONFIG}" ]; then
+    errMsg "Config file do not exits $(keyMsg ${USR_CONFIG})";
+fi
+
 # User configuration
-source ${__REPO_DIR}/scripts/auto/sync-repo-info.sh;
+source ${USR_CONFIG};
+
+# If not defined, then use the value auto detected, otherwise just use it
+isDefined="$(echo ${USER_NAME-NotDefine})"
+[ "${isDefined}" = "NotDefine" ] && USER_NAME="${__USER_NAME}"
+isDefined="$(echo ${USER_EMAIL-NotDefine})"
+[ "${isDefined}" = "NotDefine" ] && USER_EMAIL="${__USER_EMAIL}"
 
 [ "${__REPO_DIR}" != "${REPO_DIR}" ] \
     && errMsg "Repo directory not equal
@@ -90,7 +116,7 @@ if [ ! -f ${VS_VFILE} ]; then
     errMsg "Do not exits $(keyMsg ${VS_VFILE})";
 fi
 
-# The version file should be one file of the repo subdirectory
+# The version & config file should be one file of the repo subdirectory
 fullPath=$(realpath ${VS_VFILE});
 isRepoFile=${fullPath#${REPO_DIR}/};
 if [ "${isRepoFile}" = "${fullPath}" ]; then
@@ -98,6 +124,14 @@ if [ "${isRepoFile}" = "${fullPath}" ]; then
        $(keyMsg ${REPO_DIR})";
 fi
 VS_VFILE=${isRepoFile}; # Relative path of repo
+
+fullPath=$(realpath ${USR_CONFIG});
+isRepoFile=${fullPath#${REPO_DIR}/};
+if [ "${isRepoFile}" = "${fullPath}" ]; then
+    errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
+       $(keyMsg ${REPO_DIR})";
+fi
+USR_CONFIG=${isRepoFile}; # Relative path of repo
 
 HOST_USER="$(getHostUser)";
 HOST_NAME="$(getHostName)";
