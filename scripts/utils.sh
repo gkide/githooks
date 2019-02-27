@@ -391,26 +391,31 @@ function usage_example_isAPIs()
 #####################
 # normal prompt msg #
 #####################
+SKIP_ALL_MSG=false;
 function errMsg()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 1;
     [ -n "$*" ] && printf "$(msgRed ERROR): $*\n";
     return 1; # make sure return false
 }
 
 function errMsgL()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 1;
     [ -n "$*" ] && printf "$(msgRed ERROR): $*";
     return 1; # make sure return false
 }
 
 function warnMsg()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && printf "$(msgBrown WARN): $*\n";
     return 0; # make sure return true
 }
 
 function warnMsgL()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && printf "$(msgBrown WARN): $*";
     return 0; # make sure return true
 }
@@ -418,12 +423,14 @@ function warnMsgL()
 
 function infoMsg()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && printf "$(msgBlue INFO): $*\n";
     return 0; # make sure return true
 }
 
 function infoMsgL()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && printf "$(msgBlue INFO): $*";
     return 0; # make sure return true
 }
@@ -431,12 +438,14 @@ function infoMsgL()
 IS_DEBUG_MODE=true;
 function debugMsg()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && ${IS_DEBUG_MODE} && printf "$(msgMagenta DEBUG): $*\n";
     return 0; # make sure return true
 }
 
 function debugMsgL()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && ${IS_DEBUG_MODE} && printf "$(msgMagenta DEBUG): $*";
     return 0; # make sure return true
 }
@@ -444,30 +453,35 @@ function debugMsgL()
 IS_VERBOSE_MODE=true;
 function verboseMsg()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && ${IS_VERBOSE_MODE} && infoMsg "$*";
     return 0; # make sure return true
 }
 
 function verboseMsgL()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && ${IS_VERBOSE_MODE} && infoMsgL "$*";
     return 0; # make sure return true
 }
 
 function invalidArgs()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 1;
     [ -n "$*" ] && errMsg "Invalid arguments for $*";
     return 1; # make sure return false
 }
 
 function keyMsg()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && printf "$(msgBrown $*)";
     return 0; # make sure return true
 }
 
 function valMsg()
 {
+    [ "true" = ${SKIP_ALL_MSG} ] && return 0;
     [ -n "$*" ] && printf "$(msgGreen $*)";
     return 0; # make sure return true
 }
