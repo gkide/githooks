@@ -1,0 +1,7 @@
+#include <string>
+#include <iostream>
+
+static const char *semver_major = "10";
+static const char *semver_minor = "20";
+static const char *semver_patch = "30";
+static const char *semver_tweak = "beta.9";

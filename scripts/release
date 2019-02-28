@@ -59,108 +59,108 @@ set -u
 # Pipe fail if any one of the pipe command failed
 set -o pipefail
 
+# Current directory of full path with symbolic link resolved
+THIS_DIR="$(realpath ${0%/*})";
+
+# Import normal shell function-util
+# - IS_DEBUG_MODE=true;
+# - IS_VERBOSE_MODE=true;
+source ${THIS_DIR}/utils.sh;
+IS_DEBUG_MODE=false;
+__SKIP_ALL_MSG=false;
+
 _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 
-####################################
-# Change working directory to repo #
-####################################
-REPO_DIR=$(git rev-parse --show-toplevel)
-cd "${REPO_DIR}"
+# Semantic version config if not set then use the default
+USR_CONFIG="";
 
-#####################################
-# Import normal shell function-util #
-# - IS_DEBUG_MODE=true;             #
-# - IS_VERBOSE_MODE=true;           #
-#####################################
-source ${REPO_DIR}/scripts/utils.sh;
-IS_DEBUG_MODE=false;
+for item in $*; do
+    if [ "0" = "$#" ]; then
+        break;
+    fi
 
-# Local configurations
-################################################################################
-# Version File, Auto Update, full path
-VS_VFILE="${REPO_DIR}/scripts/version";
+    KEY=$(echo ${item} | sed "s/\([a-zA-Z]*\)=\([a-zA-Z0-9\/\._-]*\)/\1/g");
+    VAL=$(echo ${item} | sed "s/\([a-zA-Z]*\)=\([a-zA-Z0-9\/\._-]*\)/\2/g");
+    # infoMsg "$# [$item] => [$KEY], [$VAL]";
 
-##########################
-# Release Version Search #
-##########################
-# Version should consist of MAJOR/MINOR/PATCH/TWEAK
-# - The MAJOR, MINOR, PATCH must consit of numbers of [0-9]
-# - TWEAK is pre-release part, consist of [a-z0-9.-]
-# Each line must has one, like the following
-#    MY_VERSION_MAJOR   Can not ignore, must be 0 ~ 9
-#    MY_VERSION_MINOR   Can not ignore, must be 0 ~ 9
-#    MY_VERSION_PATCH   Can not ignore, must be 0 ~ 9
-#    MY_VERSION_TWEAK   Can be ignored, consist of [a-z0-9.-]
+    [ "$KEY" = "" -o "$KEY" = "${item}" ] && break;
+    [ "$VAL" = "" -o "$VAL" = "${item}" ] && break;
 
-if true; then # Example 4
-VS_MAJOR="#define MY_VERSION_MAJOR";
-VS_MINOR="#define MY_VERSION_MINOR";
-VS_PATCH="#define MY_VERSION_PATCH";
-VS_TWEAK="#define MY_VERSION_TWEAK";
+    if [ "CONFIG" = "$KEY" ]; then
+        USR_CONFIG="$VAL";
+        continue;
+    fi
+
+    if [ "TESTING" = "$KEY" ]; then
+        __SKIP_ALL_MSG=$VAL;
+        continue;
+    fi
+done
+
+# If true, utils functions keep quiet
+SKIP_ALL_MSG=$__SKIP_ALL_MSG;
+
+# Semantic version config not set, use the default of current working directory
+if [ "${USR_CONFIG}" = "" ]; then
+    USR_CONFIG=.semver.sh
 fi
 
-if true; then # Example 5
-VS_MAJOR="int MY_VERSION_MAJOR =";
-VS_MINOR="int MY_VERSION_MINOR =";
-VS_PATCH="int MY_VERSION_PATCH =";
+if [ ! -f "${USR_CONFIG}" ]; then
+    infoMsg "Usage: ${0##*/} [CONFIG=config] [TESTING=true]";
+    errMsg "Semantic version config do not exits $(keyMsg ${PWD}/${USR_CONFIG})";
 fi
 
-if true; then # Example 6
-VS_MAJOR="const char *MY_VERSION_MAJOR =";
-VS_MINOR="const char *MY_VERSION_MINOR =";
-VS_PATCH="const char *MY_VERSION_PATCH =";
-VS_TWEAK="const char *MY_VERSION_TWEAK =";
-fi
+# User configuration
+# - REPO_DIR
+# - REPO_VCS
+# - VS_VFILE
+source ${USR_CONFIG};
+USR_CONFIG=$(realpath -s ${USR_CONFIG}); # don't expand symlinks
 
-if true; then # Example 7
-VS_MAJOR="set(MY_VERSION_MAJOR";
-VS_MINOR="set(MY_VERSION_MINOR";
-VS_PATCH="set(MY_VERSION_PATCH";
-VS_TWEAK="set(MY_VERSION_TWEAK";
+# Change to user repo directory
+if [ ! -d ${REPO_DIR} ]; then
+    errMsg "Do not exits repo $(keyMsg ${REPO_DIR})";
 fi
+cd ${REPO_DIR}
+REPO_DIR=$(realpath -s ${REPO_DIR}); # don't expand symlinks
 
-if true; then
-VS_VFILE="${REPO_DIR}/.version";
-VS_MAJOR="MY_VERSION_MAJOR";
-VS_MINOR="MY_VERSION_MINOR";
-VS_PATCH="MY_VERSION_PATCH";
-VS_TWEAK="MY_VERSION_TWEAK";
-fi
-################################################################################
+# Checking is GIT or SVN
+VCS="$(getSupportedVCS $REPO_VCS)";
+[ "${VCS}" = "SVN" -a ! -d ${PWD}/.svn ] \
+    && errMsg "Repo is not $(keyMsg SVN)";
+[ "${VCS}" = "GIT" -a ! -d ${PWD}/.git ] \
+    && errMsg "Repo is not $(keyMsg GIT)";
 
+# Semantic version file to sync
 if [ ! -f ${VS_VFILE} ]; then
-    errMsg "Do not exits $(keyMsg ${VS_VFILE})";
+    errMsg "Do not exits semantic version file $(keyMsg ${VS_VFILE})";
 fi
 
-# The version file should be one file of the repo subdirectory
-fullPath=$(realpath ${VS_VFILE});
-isRepoFile=${fullPath#${REPO_DIR}/};
+# The version & config file should be one file of the repo subdirectory
+fullPath=$(realpath -s ${VS_VFILE}); # don't expand symlinks
+isRepoFile=${fullPath#${REPO_DIR}/}; # remove '${REPO_DIR}/'
 if [ "${isRepoFile}" = "${fullPath}" ]; then
-    errMsg "$(valMsg ${fullPath}) NOT in the repo
+    errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
        $(keyMsg ${REPO_DIR})";
 fi
-VS_VFILE=${isRepoFile}; # Relative path of repo
+VS_VFILE=${REPO_DIR}/${isRepoFile};
 
-infoMsg "Working repo $(valMsg ${REPO_DIR})";
-infoMsg "-------------------------------------------------";
-infoMsg "Just Enter with nothing will use default [value]";
-infoMsg "-------------------------------------------------";
-
-########################
-# Check release branch #
-########################
-CURRENT_BRANCH=$(git status | head -n 1 | awk '{print $3}');
-infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
-read -p "" usrInput;
-[ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
-
-if ! isYes "${usrInput}"; then
-    errMsg "Release stop.";
+fullPath=$(realpath -s ${USR_CONFIG}); # don't expand symlinks
+isRepoFile=${fullPath#${REPO_DIR}/}; # remove '${REPO_DIR}/'
+if [ "${isRepoFile}" = "${fullPath}" ]; then
+    errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
+       $(keyMsg ${REPO_DIR})";
 fi
+USR_CONFIG=${REPO_DIR}/${isRepoFile};
 
-###############################
-# Software Release Life Cycle #
-###############################
+infoMsg "----------------------------------------------------------------";
+infoMsg "Just Enter with nothing will use the default [value]";
+infoMsg "----------------------------------------------------------------";
+infoMsg "$(keyMsg ${VCS}):   Repo: $(valMsg ${REPO_DIR})";
+infoMsg "$(keyMsg ${VCS}): SemVer: $(valMsg ${VS_VFILE})";
+infoMsg "$(keyMsg ${VCS}): Config: $(valMsg ${USR_CONFIG})";
+
+# Software Release Life Cycle
 SRLC_REG="(([a-z]+)(-[a-z]+)*)(\.([0-9]+(\.[0-9]+)*))*";
 SRLC_CAN="pre alpha beta rc eol"; # CAN: Candidates
 
@@ -251,9 +251,21 @@ _major_="$(valMsg ${VERSION_MAJOR})";
 _minor_="$(valMsg ${VERSION_MINOR})";
 _patch_="$(valMsg ${VERSION_PATCH})";
 _tweak_="$(valMsg ${VERSION_TWEAK})";
-infoMsg "-------------------------------------------------";
-infoMsg "Current semantic version
-Major(${_major_})  Minor(${_minor_})  Patch(${_patch_})  Tweak(${_tweak_})";
+infoMsg "----------------------------------------------------------------";
+
+# Check release branch for GIT repo
+if [ "GIT" = "${VCS}" ]; then
+    CURRENT_BRANCH=$(git status | head -n 1 | awk '{print $3}');
+    infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
+    read -p "" usrInput;
+    [ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
+
+    if ! isYes "${usrInput}"; then
+        errMsg "Release stop.";
+    fi
+fi
+
+infoMsg "SemVer OLD => Major(${_major_})\tMinor(${_minor_})\tPatch(${_patch_})\tTweak(${_tweak_})";
 
 PREV_TWEAK_TXT="";
 PREV_TWEAK_NUM="";
@@ -271,28 +283,31 @@ PREV_TWEAK_NUM="";
     debugMsg "$(keyMsg Tweak old nums): [$(valMsg ${PREV_TWEAK_NUM})]";
 }
 
-##############################################
-# Update CHANGELOG.md & get next auto semver #
-# SEMVER_TAG is like '1.2.3' or '1.2.3-1'    #
-##############################################
+# Update CHANGELOG.md & get next auto semver
+# SEMVER_TAG is like '1.2.3' or '1.2.3-1'
 CHANGELOG="CHANGELOG.md";
 if [ ! -f "${CHANGELOG}" ]; then
-    infoMsgL "Changelog to update (File) [$(valMsg ${CHANGELOG})]: ";
+    infoMsg "----------------------------------------------------------------";
+    infoMsgL "Changelog to update ($(keyMsg SKIP)) [$(valMsg ${CHANGELOG})]: ";
     read -p "" usrInput;
-    [ -n "${usrInput}" ] && CHANGELOG="${usrInput}";
 
-    fullPath=$(realpath -m ${CHANGELOG});
-    isRepoFile=${fullPath#${REPO_DIR}/};
-    if [ "${isRepoFile}" = "${fullPath}" ]; then
-        errMsg "$(valMsg ${fullPath}) NOT in the repo
-       $(keyMsg ${REPO_DIR})";
-    fi
-    CHANGELOG=${isRepoFile}; # Relative path of repo
+    # Skip changelog update
+    if [ "${usrInput}" != "SKIP" ]; then
+        [ -n "${usrInput}" ] && CHANGELOG="${usrInput}";
 
-    if [ ! -f "${CHANGELOG}" ]; then
-        pathName=$(dirname ${CHANGELOG});
-        [ ! -e "${pathName}" ] && mkdir -p ${pathName};
-        touch "${CHANGELOG}";
+        fullPath=$(realpath -m ${CHANGELOG});
+        isRepoFile=${fullPath#${REPO_DIR}/};
+        if [ "${isRepoFile}" = "${fullPath}" ]; then
+            errMsg "$(valMsg ${fullPath}) NOT in the repo
+           $(keyMsg ${REPO_DIR})";
+        fi
+        CHANGELOG=${isRepoFile}; # Relative path of repo
+
+        if [ ! -f "${CHANGELOG}" ]; then
+            pathName=$(dirname ${CHANGELOG});
+            [ ! -e "${pathName}" ] && mkdir -p ${pathName};
+            touch "${CHANGELOG}";
+        fi
     fi
 fi
 
@@ -359,16 +374,16 @@ if [ "${PREV_TWEAK}" != "${AUTO_PREREL}" ]; then
     fi
 fi
 
-infoMsg "Next auto semantic version
-Major(${_major_})  Minor(${_minor_})  Patch(${_patch_})  Tweak(${_tweak_})";
-
-AUTO_BUMP_SEMVER=false;
-infoMsg "-------------------------------------------------";
-infoMsgL "Use auto semantic version (y/n) [y]: ";
+BUMP_SEMVER=false;
+BUMP_SEMVER_BY_USER=true;
+infoMsg "----------------------------------------------------------------";
+infoMsg "SemVer NEW => Major(${_major_})\tMinor(${_minor_})\tPatch(${_patch_})\tTweak(${_tweak_})";
+infoMsgL "Use NEW Semantic Version (y/n) [y]: ";
 read -p "" usrInput;
 [ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
 if isYes "${usrInput}"; then
-    AUTO_BUMP_SEMVER=true;
+    BUMP_SEMVER=true;
+    BUMP_SEMVER_BY_USER=false;
     VERSION_MAJOR=${AUTO_MAJOR};
     VERSION_MINOR=${AUTO_MINOR};
     VERSION_PATCH=${AUTO_PATCH};
@@ -378,71 +393,73 @@ if isYes "${usrInput}"; then
     [ -n "${IS_NUM}" ] && VERSION_TWEAK="rc.${VERSION_TWEAK}";
 fi
 
-# The final major
-infoMsgL "Major (New Major) [$(valMsg ${VERSION_MAJOR})]: ";
-read -p "" usrInput;
-case "${usrInput}" in
-"")
-    # Just Enter is empty, just use it, no touching
-    ;;
-*)
-    IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
-    [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Major) must be numbers of 0-9.";
-    VERSION_MAJOR="${usrInput}";
-    AUTO_BUMP_SEMVER=true;
-    ;;
-esac
+if ${BUMP_SEMVER_BY_USER}; then
+    # The final major
+    infoMsgL "Major (New Major) [$(valMsg ${VERSION_MAJOR})]: ";
+    read -p "" usrInput;
+    case "${usrInput}" in
+    "")
+        # Just Enter is empty, just use it, no touching
+        ;;
+    *)
+        IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
+        [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Major) must be numbers of 0-9.";
+        VERSION_MAJOR="${usrInput}";
+        BUMP_SEMVER=true;
+        ;;
+    esac
 
-# The final minor
-infoMsgL "Minor (New Minor) [$(valMsg ${VERSION_MINOR})]: ";
-read -p "" usrInput;
-case "${usrInput}" in
-"")
-    # Just Enter is empty, just use it, no touching
-    ;;
-*)
-    IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
-    [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Minor) must be numbers of 0-9.";
-    VERSION_MINOR="${usrInput}";
-    AUTO_BUMP_SEMVER=true;
-    ;;
-esac
+    # The final minor
+    infoMsgL "Minor (New Minor) [$(valMsg ${VERSION_MINOR})]: ";
+    read -p "" usrInput;
+    case "${usrInput}" in
+    "")
+        # Just Enter is empty, just use it, no touching
+        ;;
+    *)
+        IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
+        [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Minor) must be numbers of 0-9.";
+        VERSION_MINOR="${usrInput}";
+        BUMP_SEMVER=true;
+        ;;
+    esac
 
-# The final patch
-infoMsgL "Patch (New Patch) [$(valMsg ${VERSION_PATCH})]: ";
-read -p "" usrInput;
-case "${usrInput}" in
-"")
-    # Just Enter is empty, just use it, no touching
-    ;;
-*)
-    IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
-    [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Patch) must be numbers of 0-9.";
-    VERSION_PATCH="${usrInput}";
-    AUTO_BUMP_SEMVER=true;
-    ;;
-esac
+    # The final patch
+    infoMsgL "Patch (New Patch) [$(valMsg ${VERSION_PATCH})]: ";
+    read -p "" usrInput;
+    case "${usrInput}" in
+    "")
+        # Just Enter is empty, just use it, no touching
+        ;;
+    *)
+        IS_NUM=$(echo "${usrInput}" | ${_sed} -n "/^[0-9]+$/p");
+        [ -z "${IS_NUM}" ] && errMsg "$(keyMsg Patch) must be numbers of 0-9.";
+        VERSION_PATCH="${usrInput}";
+        BUMP_SEMVER=true;
+        ;;
+    esac
 
-# The final tweak
-infoMsgL "Tweak (New Tweak or $(keyMsg SKIP)) [$(valMsg ${VERSION_TWEAK})]: ";
-read -p "" usrInput;
-case "${usrInput}" in
-"")
-    # Just Enter is empty, just use it, no touching
-    ;;
-"SKIP")
-    # Tweak skip, empty the value
-    if [ -n "${VERSION_TWEAK}" ]; then
-        # Not auto bump, clean ${VS_VFILE} tweak part only
-        VERSION_TWEAK="";
-        AUTO_BUMP_SEMVER=true;
-    fi
-    ;;
-*)
-    VERSION_TWEAK="${usrInput}";
-    AUTO_BUMP_SEMVER=true; # new tweak value
-    ;;
-esac
+    # The final tweak
+    infoMsgL "Tweak (New Tweak or $(keyMsg SKIP)) [$(valMsg ${VERSION_TWEAK})]: ";
+    read -p "" usrInput;
+    case "${usrInput}" in
+    "")
+        # Just Enter is empty, just use it, no touching
+        ;;
+    "SKIP")
+        # Tweak skip, empty the value
+        if [ -n "${VERSION_TWEAK}" ]; then
+            # Not auto bump, clean ${VS_VFILE} tweak part only
+            VERSION_TWEAK="";
+            BUMP_SEMVER=true;
+        fi
+        ;;
+    *)
+        VERSION_TWEAK="${usrInput}";
+        BUMP_SEMVER=true; # new tweak value
+        ;;
+    esac
+fi
 
 VERSION_TWEAK_TXT="";
 VERSION_TWEAK_NUM="";
@@ -504,7 +521,7 @@ done
 ${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" ${CHANGELOG}
 rm ${CHANGELOG}.bk;
 
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
 _major_="$(valMsg ${VERSION_MAJOR})";
 [ "${PREV_MAJOR}" != "${VERSION_MAJOR}" ] \
     && _major_="$(msgRed ${VERSION_MAJOR})";
@@ -577,13 +594,13 @@ LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "");
 [ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit";
 
 infoMsg "Recently tag : $(keyMsg ${LATEST_TAG})";
-infoMsg "Release tag  : $(valMsg ${RELEASE_TAG})";
+infoMsg "Release  tag : $(valMsg ${RELEASE_TAG})";
 infoMsg "Release major: $(valMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
 infoMsg "Release minor: $(valMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
 infoMsg "Release patch: $(valMsg ${PREV_PATCH})${indentC}=> ${_patch_}";
 infoMsg "Release tweak: $(valMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
 
-if ${AUTO_BUMP_SEMVER}; then
+if ${BUMP_SEMVER}; then
     # Update Version
     ${_sed} -i.bk "s/${REGEXP_MAJOR}/\1${VERSION_MAJOR}\3/" ${VS_VFILE};
     ${_sed} -i.bk "s/${REGEXP_MINOR}/\1${VERSION_MINOR}\3/" ${VS_VFILE};
@@ -593,21 +610,21 @@ if ${AUTO_BUMP_SEMVER}; then
     rm ${VS_VFILE}.bk;
 fi
 
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
 infoMsgL "Show $(valMsg ${CHANGELOG}) diff (y/n) [n]: ";
 read -p "" usrInput;
 if isYes "${usrInput}"; then
     git diff ${CHANGELOG};
 fi
 
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
 infoMsgL "Show $(valMsg ${VS_VFILE}) diff (y/n) [n]: ";
 read -p "" usrInput;
 if isYes "${usrInput}"; then
     git diff ${VS_VFILE};
 fi
 
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
 infoMsgL "Build the project (Build Command or $(keyMsg SKIP)) [make]: ";
 read -p "" usrInput;
 [ -z "${usrInput}" ] && usrInput='make'; # Just Enter
@@ -615,7 +632,7 @@ if [ "${usrInput}" != "SKIP" ]; then
     ${usrInput}; # the project build command
 fi
 
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
 infoMsgL "Run programme to confirm (Command to run) []: ";
 read -p "" usrInput;
 if [ -n "${usrInput}" ]; then
@@ -633,7 +650,7 @@ MSG_BDY="
 TAG_MSG="${TAG_HDR}${MSG_BDY}";
 COMMIT_MSG="${CMT_HDR}${MSG_BDY}";
 
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
 infoMsg "The message for signed-off commit";
 printf "$(msgGreen "${COMMIT_MSG}")\n";
 
@@ -641,13 +658,11 @@ infoMsg "The message for signed annotated tag";
 printf "$(msgGreen "${TAG_MSG}")\n";
 
 # Really want to do this
-infoMsg "-------------------------------------------------";
+infoMsg "----------------------------------------------------------------";
 infoMsgL "Confirm git commit & tag (y/n) [n]: ";
 read -p "" usrInput;
 if isNo "${usrInput}"; then
-    yesMsg="$(keyMsg y), $(keyMsg yes), $(keyMsg Y)";
-    yesMsg="${yesMsg}, $(keyMsg Yes) or $(keyMsg YES)";
-    errMsg "Release stop, confirm with ${yesMsg}";
+    errMsg "Release stop, confirm with $(keyMsg y) or $(keyMsg Y)";
 fi
 
 if isYes "${usrInput}"; then
