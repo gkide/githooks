@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-GITHOOKS_VERSION="v0.0.1-rc.0";
-# https://github.com/gkide/githooks
+REPOHOOKS_RELEASE=false;
+REPOHOOKS_VERSION="v0.0.1-rc.0";
+# https://github.com/gkide/repo-hooks
 
 # Semantic Version
 # https://semver.org/
@@ -95,7 +96,18 @@ for item in $*; do
         __SKIP_ALL_MSG=$VAL;
         continue;
     fi
+
+    if [ "REPOHOOKS" = "$KEY" ]; then
+        REPOHOOKS_RELEASE=$VAL;
+        continue;
+    fi
 done
+
+if $REPOHOOKS_RELEASE; then
+    ${_sed} -i.bk "s/^(REPOHOOKS_VERSION=\")([0-9a-z\.-]+)(\";)$/\1${RELEASE_TAG}\3/" ${0};
+    rm ${0}.bk;
+    git add ${0};
+fi
 
 # If true, utils functions keep quiet
 SKIP_ALL_MSG=$__SKIP_ALL_MSG;
@@ -130,6 +142,17 @@ VCS="$(getSupportedVCS $REPO_VCS)";
     && errMsg "Repo is not $(keyMsg SVN)";
 [ "${VCS}" = "GIT" -a ! -d ${PWD}/.git ] \
     && errMsg "Repo is not $(keyMsg GIT)";
+
+isGitRepo=false;
+isSvnRepo=false;
+case "${VCS}" in
+    "GIT")
+        isGitRepo=true;
+        ;;
+    "SVN")
+        isSvnRepo=true;
+        ;;
+esac
 
 # Semantic version file to sync
 if [ ! -f ${VS_VFILE} ]; then
@@ -254,7 +277,7 @@ _tweak_="$(valMsg ${VERSION_TWEAK})";
 infoMsg "----------------------------------------------------------------";
 
 # Check release branch for GIT repo
-if [ "GIT" = "${VCS}" ]; then
+if ${isGitRepo}; then
     CURRENT_BRANCH=$(git status | head -n 1 | awk '{print $3}');
     infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
     read -p "" usrInput;
@@ -512,10 +535,12 @@ if ! $(standard-release -x --is-semver "${RELEASE_TAG}"); then
     errMsg "Invalid release semver($(valMsg ${RELEASE_TAG}))";
 fi
 
-for tag in $(git tag --list); do
-    [ "${tag}" = "${RELEASE_TAG}" ] \
-        && errMsg "The semver tag $(valMsg ${tag}) already exists";
-done
+if ${isGitRepo}; then
+    for tag in $(git tag --list); do
+        [ "${tag}" = "${RELEASE_TAG}" ] \
+            && errMsg "The semver tag $(valMsg ${tag}) already exists";
+    done
+fi
 
 # Sync CHANGELOG.md release tag to the one really used
 ${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" ${CHANGELOG}
@@ -590,8 +615,10 @@ done
 #debugMsg "$(keyMsg Tweak indent): [${indentD}]";
 
 # The previous latest tag
-LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "");
-[ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit";
+if ${isGitRepo}; then
+    LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "");
+    [ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit";
+fi
 
 infoMsg "Recently tag : $(keyMsg ${LATEST_TAG})";
 infoMsg "Release  tag : $(valMsg ${RELEASE_TAG})";
@@ -614,14 +641,14 @@ infoMsg "----------------------------------------------------------------";
 infoMsgL "Show $(valMsg ${CHANGELOG}) diff (y/n) [n]: ";
 read -p "" usrInput;
 if isYes "${usrInput}"; then
-    git diff ${CHANGELOG};
+    ${isGitRepo} && git diff ${CHANGELOG};
 fi
 
 infoMsg "----------------------------------------------------------------";
 infoMsgL "Show $(valMsg ${VS_VFILE}) diff (y/n) [n]: ";
 read -p "" usrInput;
 if isYes "${usrInput}"; then
-    git diff ${VS_VFILE};
+    ${isGitRepo} && git diff ${VS_VFILE};
 fi
 
 infoMsg "----------------------------------------------------------------";
@@ -639,7 +666,7 @@ if [ -n "${usrInput}" ]; then
     ${usrInput}; # the executable programme to run
 fi
 
-# Git Commit & Tag
+# Commit & Tag
 TAG_HDR="chore(auto): tag ${RELEASE_TAG}";
 CMT_HDR="chore(auto): release ${RELEASE_TAG}";
 MSG_BDY="
@@ -659,26 +686,22 @@ printf "$(msgGreen "${TAG_MSG}")\n";
 
 # Really want to do this
 infoMsg "----------------------------------------------------------------";
-infoMsgL "Confirm git commit & tag (y/n) [n]: ";
+infoMsgL "Confirm $(valMsg ${VCS}) commit & tag (y/n) [n]: ";
 read -p "" usrInput;
 if isNo "${usrInput}"; then
     errMsg "Release stop, confirm with $(keyMsg y) or $(keyMsg Y)";
 fi
 
 if isYes "${usrInput}"; then
-    git add ${VS_VFILE};  # Update version
-    git add ${CHANGELOG}; # Update changelog
+    if ${isGitRepo}; then
+        git add ${VS_VFILE};  # Update version
+        git add ${CHANGELOG}; # Update changelog
 
-    if [ "$1" = "GITHOOKS_RELEASE" ]; then
-        ${_sed} -i.bk "s/^(GITHOOKS_VERSION=\")([0-9a-z\.-]+)(\";)$/\1${RELEASE_TAG}\3/" ${0};
-        rm ${0}.bk;
-        git add ${0};
+        # Do release commit
+        git commit --signoff -m "${COMMIT_MSG}";
+        # Do release tag
+        git tag --sign -a "${RELEASE_TAG}" -m "${TAG_MSG}";
     fi
-
-    # Do release commit
-    git commit --signoff -m "${COMMIT_MSG}";
-    # Do release tag
-    git tag --sign -a "${RELEASE_TAG}" -m "${TAG_MSG}";
 fi
 
 infoMsg "################";
