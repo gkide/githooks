@@ -1,8 +1,6 @@
 # Repo Hooks
 
-![release](https://img.shields.io/github/release/gkide/repo-hooks.svg)
-![latest](https://img.shields.io/github/tag-date/gkide/repo-hooks.svg?colorB=orange)
-
+![release](https://img.shields.io/github/tag-date/gkide/githooks.svg?label=release&color=orange)
 ![top-language-rate](https://img.shields.io/github/languages/top/gkide/repo-hooks.svg)
 ![languages-count](https://img.shields.io/github/languages/count/gkide/repo-hooks.svg)
 ![code-size](https://img.shields.io/github/languages/code-size/gkide/repo-hooks.svg)
@@ -10,7 +8,7 @@
 ![open-issues](https://img.shields.io/github/issues/gkide/repo-hooks.svg)
 ![open-pull-requests](https://img.shields.io/github/issues-pr/gkide/repo-hooks.svg)
 
-The git hooks for local usage, make it consistent and simple.
+The repo hooks for local usage, make it consistent and simple.
 
 ## Recommend Usage
 
