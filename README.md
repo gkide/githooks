@@ -1,14 +1,14 @@
-# Githooks
+# Repo Hooks
 
-![release](https://img.shields.io/github/release/gkide/githooks.svg)
-![latest](https://img.shields.io/github/tag-date/gkide/githooks.svg?colorB=orange)
+![release](https://img.shields.io/github/release/gkide/repo-hooks.svg)
+![latest](https://img.shields.io/github/tag-date/gkide/repo-hooks.svg?colorB=orange)
 
-![top-language-rate](https://img.shields.io/github/languages/top/gkide/githooks.svg)
-![languages-count](https://img.shields.io/github/languages/count/gkide/githooks.svg)
-![code-size](https://img.shields.io/github/languages/code-size/gkide/githooks.svg)
-![downloads-count](https://img.shields.io/github/downloads/gkide/githooks/total.svg)
-![open-issues](https://img.shields.io/github/issues/gkide/githooks.svg)
-![open-pull-requests](https://img.shields.io/github/issues-pr/gkide/githooks.svg)
+![top-language-rate](https://img.shields.io/github/languages/top/gkide/repo-hooks.svg)
+![languages-count](https://img.shields.io/github/languages/count/gkide/repo-hooks.svg)
+![code-size](https://img.shields.io/github/languages/code-size/gkide/repo-hooks.svg)
+![downloads-count](https://img.shields.io/github/downloads/gkide/repo-hooks/total.svg)
+![open-issues](https://img.shields.io/github/issues/gkide/repo-hooks.svg)
+![open-pull-requests](https://img.shields.io/github/issues-pr/gkide/repo-hooks.svg)
 
 The git hooks for local usage, make it consistent and simple.
 
@@ -37,47 +37,48 @@ The git hooks for local usage, make it consistent and simple.
   * Local install: `$ npm install @gkide/standard-release`
   * Global install: `$ npm install -g @gkide/standard-release`
 
-### Step 2: Githooks
+- Init for repo by [standard-release](standard_release_url)
+  * `$ cd path/to/repo && standard-release -i && cd .standard-release`
+  * It maybe a better idea to add **.standard-release** to **.gitignore**
 
-- Local Configurations
+### Step 2: Repo Hooks
 
-  - No mixing **LF** and **CRLF** by using `$ git config core.safecrlf true`
+- Repo Configurations
+
+  - Make sure no mixing **LF** and **CRLF** by using `$ git config core.safecrlf true`
 
   - Git newer than 2.9.0, [conventional](./Conventional.md) checking & git hooks:
 
-    * `$ cd path/to/repo && standard-release -i && cd .standard-release`
-    * It maybe a better idea to add **.standard-release** to **.gitignore**
-    * `$ git clone https://github.com/gkide/githooks`
-    * `$ cd ..`
-    * `$ git config core.hooksPath ${PWD}/.standard-release/githooks`
-    * `$ git config commit.template ${PWD}/.standard-release/githooks/GitCommitStyle`
-
-  - Git older than 2.9.0, [conventional](./Conventional.md) checking & git hooks:
-
-    * Clone **githooks** into the `path/to/repo/.git/hooks/`
-    * `$ git config commit.template path/to/GitCommitStyle`
+    * `$ cd path/to/repo`
+    * `$ git clone https://github.com/gkide/repo-hooks .repo-hooks`
+    * `$ git config --global core.hooksPath $PWD/.repo-hooks`
+    * `$ git config --global commit.template $PWD/.repo-hooks/GitCommitStyle`
 
 - Global Configurations
 
+  - Make sure no mixing **LF** and **CRLF** by using `$ git config --global core.safecrlf true`
+
   - Git newer than 2.9.0, [conventional](./Conventional.md) checking & git hooks:
 
-    * `$ cd && git clone https://github.com/gkide/githooks .githooks`
-    * `$ git config --global core.hooksPath ~/.githooks`
-    * `$ git config --global commit.template ~/.githooks/GitCommitStyle`
+    * `$ cd && git clone https://github.com/gkide/repo-hooks .repo-hooks`
+    * `$ git config --global core.hooksPath ~/.repo-hooks`
+    * `$ git config --global commit.template ~/.repo-hooks/GitCommitStyle`
 
 # About Git Hooks
+
+[git_scm_docs_githooks_url]: https://git-scm.com/docs/githooks/2.9.0
+
 As of [2.9.0 the docs address][git_scm_docs_githooks_url]:
 
 Before Git invokes a hook, it changes its working directory to either the root of
 the working tree in a non-bare repository, or to the `$GIT_DIR` in a bare repository.
 
-[git_scm_docs_githooks_url]: https://git-scm.com/docs/githooks/2.9.0
-
 # Reference
-- [Git Config][git_config_url]
-- [Missing Git Hooks Docs][missing_git_hooks_docs_url]
 
 [git_config_url]: https://git-scm.com/docs/git-config
+[conventional_commits_url]: https://conventionalcommits.org
 [missing_git_hooks_docs_url]: https://longair.net/blog/2011/04/09/missing-git-hooks-documentation
 
-
+- [Git Config][git_config_url]
+- [Conventional Commits](conventional_commits_url)
+- [Missing Git Hooks Docs][missing_git_hooks_docs_url]

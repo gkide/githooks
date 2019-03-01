@@ -620,7 +620,7 @@ if ${isGitRepo}; then
     [ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit";
 fi
 
-infoMsg "Recently tag : $(keyMsg ${LATEST_TAG})";
+infoMsg "Recently tag : $(msgRed ${LATEST_TAG})";
 infoMsg "Release  tag : $(valMsg ${RELEASE_TAG})";
 infoMsg "Release major: $(valMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
 infoMsg "Release minor: $(valMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
