@@ -6,8 +6,4 @@ all:
 
 PHONY += release
 release:
-	@scripts/release GITHOOKS_RELEASE
-
-PHONY += sync-repo-info
-sync-repo-info:
-	@scripts/sync-repo-info $(VCS)
+	@scripts/release

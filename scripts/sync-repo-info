@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-REPOHOOKS_RELEASE=false;
-REPOHOOKS_VERSION="v0.0.1-rc.0";
+REPO_HOOKS_VERSION="v0.0.1-rc.0";
 # https://github.com/gkide/repo-hooks
 
 # Exit the script if any statement returns a non-true return value
@@ -47,18 +46,7 @@ for item in $*; do
         __SKIP_ALL_MSG=$VAL;
         continue;
     fi
-
-    if [ "REPOHOOKS" = "$KEY" ]; then
-        REPOHOOKS_RELEASE=$VAL;
-        continue;
-    fi
 done
-
-if $REPOHOOKS_RELEASE; then
-    ${_sed} -i.bk "s/^(REPOHOOKS_VERSION=\")([0-9a-z\.-]+)(\";)$/\1${RELEASE_TAG}\3/" ${0};
-    rm ${0}.bk;
-    git add ${0};
-fi
 
 # If true, utils functions keep quiet
 SKIP_ALL_MSG=$__SKIP_ALL_MSG;
