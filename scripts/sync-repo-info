@@ -178,9 +178,11 @@ else
     BUILD_USER="";
 fi
 
+REPO_NAME=$(basename ${REPO_DIR});
 infoMsg "----------------------------------------------------------------";
-infoMsg "$(keyMsg ${VCS}): Config: $(valMsg ${USR_CONFIG})";
-infoMsg "$(keyMsg ${VCS}): RepoInfo: $(valMsg ${VS_VFILE})";
+infoMsg "$(keyMsg ${VCS}): Repo Dir: $(valMsg ${REPO_DIR})";
+infoMsg "$(keyMsg ${VCS}): Repo Cfg: $(keyMsg ${REPO_NAME})/$(valMsg ${USR_CONFIG#${REPO_DIR}/})";
+infoMsg "$(keyMsg ${VCS}): SyncInfo: $(keyMsg ${REPO_NAME})/$(valMsg ${VS_VFILE#${REPO_DIR}/})";
 infoMsg "----------------------------------------------------------------";
 infoMsg "$(keyMsg ${VCS}): Build host: $(valMsg ${HOST_USER})@$(valMsg ${HOST_NAME}) is $(valMsg ${HOST_OSNV})";
 infoMsg "----------------------------------------------------------------";
