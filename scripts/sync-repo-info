@@ -43,7 +43,7 @@ for item in $*; do
     fi
 
     if [ "TESTING" = "$KEY" ]; then
-        __SKIP_ALL_MSG=$VAL;
+        __SKIP_ALL_MSG=true;
         continue;
     fi
 done

@@ -13,6 +13,7 @@ GIT_REPO=${TMEM_DIR}/GitRepo
 SVN_REPO=${TMEM_DIR}/SvnRepo
 
 # The sync repo info scripts to testing
+SyncRelease=${THIS_DIR}/sync-release
 SyncRepoInfo=${THIS_DIR}/sync-repo-info
 
 # Import normal shell function-util
@@ -97,58 +98,77 @@ function syncGitRepoInfo()
 {
     cd ${GIT_REPO}
 
-    LANG=$1
+    TYPE=$1
     QUIET=$2
 
     if [ "" = "$QUIET" ]; then
-        echo "FILE=RepoInfo.$LANG"
-        echo "USER=RepoInfo.$LANG.sh"
+        echo "FILE=RepoInfo.$TYPE"
+        echo "USER=RepoInfo.$TYPE.sh"
     fi
 
-    cp -f RepoInfo.$LANG.sh .sync-repo-info.sh
+    cp -f RepoInfo.$TYPE.sh .sync-repo-info.sh
 
     ${SyncRepoInfo} $QUIET;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking GIT repo: REPO/.sync-repo-info.sh";
+    isTestOk "${isOk}" "Checking GIT repo(I): REPO/.sync-repo-info.sh";
 
-    ${SyncRepoInfo} $QUIET CONFIG=RepoInfo.$LANG.sh;
+    ${SyncRepoInfo} $QUIET CONFIG=RepoInfo.$TYPE.sh;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking GIT repo: REPO/RepoInfo.$LANG.sh";
+    isTestOk "${isOk}" "Checking GIT repo(I): REPO/RepoInfo.$TYPE.sh";
 
     mkdir -p subdir; cd subdir;
     cp -f ../.sync-repo-info.sh sync-repo-info.sh
     ${SyncRepoInfo} $QUIET CONFIG=sync-repo-info.sh;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking GIT repo: REPO/subdir/sync-repo-info.sh";
+    isTestOk "${isOk}" "Checking GIT repo(I): REPO/subdir/sync-repo-info.sh";
+
+    cd - > /dev/null;
+    export LANG=en_US.UTF-8;
+    cp -f RepoInfo.$TYPE.sh .sync-repo-info.sh;
+    QUIET="${QUIET} INTERACTIVE=false";
+
+    ${SyncRelease} $QUIET;
+    if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/.sync-repo-info.sh";
+
+    ${SyncRelease} $QUIET CONFIG=RepoInfo.$TYPE.sh;
+    if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
+
+    mkdir -p subdir; cd subdir;
+    cp -f ../.sync-repo-info.sh sync-repo-info.sh
+    ${SyncRelease} $QUIET CONFIG=sync-repo-info.sh;
+    if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/subdir/sync-repo-info.sh";
 }
 
 function syncSvnRepoInfo()
 {
     cd ${SVN_REPO}
 
-    LANG=$1
+    TYPE=$1
     QUIET=$2
 
     if [ "" = "$QUIET" ]; then
-        echo "FILE=RepoInfo.$LANG"
-        echo "USER=RepoInfo.$LANG.sh"
+        echo "FILE=RepoInfo.$TYPE"
+        echo "USER=RepoInfo.$TYPE.sh"
     fi
 
-    cp -f RepoInfo.$LANG.sh .sync-repo-info.sh
+    cp -f RepoInfo.$TYPE.sh .sync-repo-info.sh
 
     ${SyncRepoInfo} $QUIET;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking SVN repo: REPO/.sync-repo-info.sh";
+    isTestOk "${isOk}" "Checking SVN repo(I): REPO/.sync-repo-info.sh";
 
-    ${SyncRepoInfo} $QUIET CONFIG=RepoInfo.$LANG.sh;
+    ${SyncRepoInfo} $QUIET CONFIG=RepoInfo.$TYPE.sh;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking SVN repo: REPO/RepoInfo.$LANG.sh";
+    isTestOk "${isOk}" "Checking SVN repo(I): REPO/RepoInfo.$TYPE.sh";
 
     cd subdir;
     cp -f ../.sync-repo-info.sh sync-repo-info.sh;
     ${SyncRepoInfo} $QUIET CONFIG=sync-repo-info.sh;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking SVN repo: REPO/subdir/sync-repo-info.sh";
+    isTestOk "${isOk}" "Checking SVN repo(I): REPO/subdir/sync-repo-info.sh";
 }
 
 function syncForGitRepo()
@@ -165,6 +185,8 @@ function syncForGitRepo()
     syncGitRepoInfo cpp TESTING=true
     echo '----------------------------------------'
     syncGitRepoInfo java TESTING=true
+    echo '----------------------------------------'
+    syncGitRepoInfo cmake TESTING=true
 }
 
 function syncForSvnRepo()
@@ -181,6 +203,8 @@ function syncForSvnRepo()
     syncSvnRepoInfo cpp TESTING=true
     echo '----------------------------------------'
     syncSvnRepoInfo java TESTING=true
+    echo '----------------------------------------'
+    syncSvnRepoInfo cmake TESTING=true
 }
 
 function main()

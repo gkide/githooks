@@ -18,6 +18,12 @@ struct RepoInfo {
     // remote repo url & hash
     static const std::string repoHash; // SVN Reversion or Git Commit Hash
     static const std::string repoUrl; // remote repo url
+
+    // semantic version
+    static const long major;
+    static const long minor;
+    static const long patch;
+    static const std::string tweak;
 };
 
 const std::string RepoInfo::hostName = "host name";
@@ -32,16 +38,28 @@ const std::string RepoInfo::modifyTime = "2019-01-30 20:50:59 +8123";
 const std::string RepoInfo::repoHash = "615";
 const std::string RepoInfo::repoUrl = "svn://addr/app/trunk/mta";
 
+const long RepoInfo::major = 11;
+const long RepoInfo::minor = 22;
+const long RepoInfo::patch = 33;
+const std::string RepoInfo::tweak = "alpha";
+
 int main(void)
 {
     std::cout << RepoInfo::hostName << std::endl;
     std::cout << RepoInfo::hostUser << std::endl;
     std::cout << RepoInfo::hostOsNV << std::endl;
+
     std::cout << RepoInfo::buildUser << std::endl;
     std::cout << RepoInfo::buildTime << std::endl;
+
     std::cout << RepoInfo::modifyTime << std::endl;
     std::cout << RepoInfo::repoHash << std::endl;
     std::cout << RepoInfo::repoUrl << std::endl;
+
+    std::cout << RepoInfo::major << std::endl;
+    std::cout << RepoInfo::minor << std::endl;
+    std::cout << RepoInfo::patch << std::endl;
+    std::cout << RepoInfo::tweak << std::endl;
 
     return 0;
 }

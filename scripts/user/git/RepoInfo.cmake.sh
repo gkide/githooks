@@ -16,7 +16,38 @@ REPO_VCS="GIT";
 REPO_DIR="$(git rev-parse --show-toplevel)";
 
 # Repo info file to sync
-VS_VFILE="${REPO_DIR}/scripts/user/SemVer.c1";
+VS_VFILE="${REPO_DIR}/RepoInfo.cmake1";
+
+# NOTE
+# The following value's special chars will be escaped or replaced
+# - space     \s+
+# - ()        \(
+# - *         \*
+# - [         \[
+# - ]         \]
+
+# Remote repo URL
+VS_REPO_URL="set(MY_REPO_URL"
+# The repo hash
+# - GIT: it is the 7-chars short SHA
+# - SVN: it is the reversion number
+VS_REPO_HASH="MY_REPO_HASH"
+
+# The repo last modification time
+# ISO8601 => "2019-01-19 01:00:52 +0800"
+VS_MODIFY_TIME="set(MY_MODIFY_TIME"
+
+# The build user info
+VS_BUILD_USER="set(MY_BUILD_USER"
+# The current build time, format is ISO8601
+VS_BUILD_TIME="set(MY_BUILD_TIME"
+
+# The build host name
+VS_HOST_NAME="set(MY_HOST_NAME"
+# The build host user name
+VS_HOST_USER="set(MY_HOST_USER"
+# The build host system name and version
+VS_HOST_OSNV="set(MY_HOST_OSNV"
 
 # Semantic version
 # Version should consist of MAJOR/MINOR/PATCH/TWEAK
@@ -28,15 +59,7 @@ VS_VFILE="${REPO_DIR}/scripts/user/SemVer.c1";
 #   PATCH   Can not ignore, must be 0 ~ 9
 #   TWEAK   Can be ignored, consist of [a-z0-9.-]
 
-# NOTE
-# The following value's special chars will be escaped or replaced
-# - space     \s+
-# - ()        \(
-# - *         \*
-# - [         \[
-# - ]         \]
-
-VS_MAJOR="static const char *semver_major =";
-VS_MINOR="static const char *semver_minor =";
-VS_PATCH="static const char *semver_patch =";
-VS_TWEAK="static const char *semver_tweak =";
+VS_MAJOR="set(MY_SEMVER_MAJOR"
+VS_MINOR="set(MY_SEMVER_MINOR"
+VS_PATCH="set(MY_SEMVER_PATCH"
+VS_TWEAK="set(MY_SEMVER_TWEAK"

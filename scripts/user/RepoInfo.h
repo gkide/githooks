@@ -16,3 +16,9 @@
 #define REPO_HASH   "615"
 #define REPO_HASH   14ab478
 #define REPO_URL    "svn://addr/app/trunk/mta"
+
+// semantic version
+#define SEMVER_MAJOR   11
+#define SEMVER_MINOR   22
+#define SEMVER_PATCH   33
+#define SEMVER_TWEAK   "alpha"

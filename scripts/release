@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# Exit the script if any statement returns a non-true return value
+set -e
+# Show error if used undefined variable
+set -u
+# Pipe fail if any one of the pipe command failed
+set -o pipefail
+
 _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 
 # Current directory of full path with symbolic link resolved
@@ -9,10 +16,20 @@ THIS_DIR="$(realpath ${0%/*})";
 source ${THIS_DIR}/utils.sh;
 
 REPO_DIR=$(git rev-parse --show-toplevel);
-SEMVER_TAG=$(standard-release -x -c -r 2>/dev/null \
+AUTO_TAG=$(standard-release -x -c -r 2>/dev/null \
     | head -n 1 | awk -F':' 'gsub(/[ ]/,"",$2) { print $2; }');
 
-SYNC_SEMVER=${REPO_DIR}/scripts/sync-semver;
+infoMsg "----------------------------------------";
+infoMsgL "Release semver [$(valMsg ${AUTO_TAG})]: ";
+SEMVER_TAG="${AUTO_TAG}"; # Just Enter use the auto one
+read -p "" usrInput;
+[ -n "${usrInput}" ] && SEMVER_TAG="${usrInput}";
+
+if ! $(standard-release -x --is-semver "${SEMVER_TAG}"); then
+    errMsg "Invalid release semver($(valMsg ${SEMVER_TAG}))";
+fi
+
+SYNC_SEMVER=${REPO_DIR}/scripts/sync-release;
 ${_sed} -i.bk "s/^(REPO_HOOKS_VERSION=\")([0-9a-z\.-]+)(\";)$/\1${SEMVER_TAG}\3/" ${SYNC_SEMVER};
 rm ${SYNC_SEMVER}.bk;
 

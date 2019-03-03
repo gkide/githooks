@@ -1,0 +1,21 @@
+# build host name, user name, os name version
+set(MY_HOST_NAME "host-name")
+set(MY_HOST_USER "user-name")
+set(MY_HOST_OSNV "Ubuntu 14.04")
+
+# build usr, emai, data time
+set(MY_BUILD_USER "user-name <email@demo.com>")
+set(MY_BUILD_TIME "2018-01-30 10:20:30 +0845")
+
+# source modify date time
+set(MY_MODIFY_TIME "2019-01-30 20:50:59 +8123")
+
+# remote repo url
+set(MY_REPO_HASH 615)
+set(MY_REPO_URL "svn://addr/app/trunk/mta")
+
+# semantic version
+set(MY_SEMVER_MAJOR "01")
+set(MY_SEMVER_MINOR "02")
+set(MY_SEMVER_PATCH "03")
+set(MY_SEMVER_TWEAK "beta.15")

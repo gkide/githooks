@@ -12,11 +12,11 @@
 # 2. This current file & ${VS_VFILE} should be files of the git repo
 
 # Repo root directory, full path
-REPO_VCS="GIT";
-REPO_DIR="$(git rev-parse --show-toplevel)";
+REPO_VCS="SVN";
+REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }');
 
 # Repo info file to sync
-VS_VFILE="${REPO_DIR}/RepoInfo.cpp";
+VS_VFILE="${REPO_DIR}/RepoInfo.cmake1";
 
 # NOTE
 # The following value's special chars will be escaped or replaced
@@ -27,27 +27,27 @@ VS_VFILE="${REPO_DIR}/RepoInfo.cpp";
 # - ]         \]
 
 # Remote repo URL
-VS_REPO_URL="const std::string RepoInfo::repoUrl =";
+VS_REPO_URL="set(MY_REPO_URL"
 # The repo hash
 # - GIT: it is the 7-chars short SHA
 # - SVN: it is the reversion number
-VS_REPO_HASH="const std::string RepoInfo::repoHash =";
+VS_REPO_HASH="MY_REPO_HASH"
 
 # The repo last modification time
 # ISO8601 => "2019-01-19 01:00:52 +0800"
-VS_MODIFY_TIME="const std::string RepoInfo::modifyTime =";
+VS_MODIFY_TIME="set(MY_MODIFY_TIME"
 
-# User info
-VS_BUILD_USER="const std::string RepoInfo::buildUser =";
+# The build user info
+VS_BUILD_USER="set(MY_BUILD_USER"
 # The current build time, format is ISO8601
-VS_BUILD_TIME="const std::string RepoInfo::buildTime";
+VS_BUILD_TIME="set(MY_BUILD_TIME"
 
 # The build host name
-VS_HOST_NAME="const std::string RepoInfo::hostName =";
+VS_HOST_NAME="set(MY_HOST_NAME"
 # The build host user name
-VS_HOST_USER="const std::string RepoInfo::hostUser =";
+VS_HOST_USER="set(MY_HOST_USER"
 # The build host system name and version
-VS_HOST_OSNV="const std::string RepoInfo::hostOsNV =";
+VS_HOST_OSNV="set(MY_HOST_OSNV"
 
 # Semantic version
 # Version should consist of MAJOR/MINOR/PATCH/TWEAK
@@ -59,7 +59,7 @@ VS_HOST_OSNV="const std::string RepoInfo::hostOsNV =";
 #   PATCH   Can not ignore, must be 0 ~ 9
 #   TWEAK   Can be ignored, consist of [a-z0-9.-]
 
-VS_MAJOR="const std::string RepoInfo::major =";
-VS_MINOR="const std::string RepoInfo::minor =";
-VS_PATCH="const std::string RepoInfo::patch =";
-VS_TWEAK="const std::string RepoInfo::tweak =";
+VS_MAJOR="set(MY_SEMVER_MAJOR"
+VS_MINOR="set(MY_SEMVER_MINOR"
+VS_PATCH="set(MY_SEMVER_PATCH"
+VS_TWEAK="set(MY_SEMVER_TWEAK"

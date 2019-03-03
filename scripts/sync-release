@@ -71,6 +71,11 @@ __SKIP_ALL_MSG=false;
 
 _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 
+# Interactive mode or not
+IS_INTERACTIVE=true;
+# Run testing
+IS_TESTING=false;
+
 # Semantic version config if not set then use the default
 USR_CONFIG="";
 
@@ -91,8 +96,14 @@ for item in $*; do
         continue;
     fi
 
+    if [ "INTERACTIVE" = "$KEY" ]; then
+        IS_INTERACTIVE=$VAL;
+        continue;
+    fi
+
     if [ "TESTING" = "$KEY" ]; then
-        __SKIP_ALL_MSG=$VAL;
+        __SKIP_ALL_MSG=true;
+        IS_TESTING=true;
         continue;
     fi
 done
@@ -102,12 +113,12 @@ SKIP_ALL_MSG=$__SKIP_ALL_MSG;
 
 # Semantic version config not set, use the default of current working directory
 if [ "${USR_CONFIG}" = "" ]; then
-    USR_CONFIG=.sync-semver.sh
+    USR_CONFIG=.sync-repo-info.sh
 fi
 
 if [ ! -f "${USR_CONFIG}" ]; then
     infoMsg "Usage: ${0##*/} [CONFIG=config] [TESTING=true]";
-    errMsg "Semantic version config do not exits $(keyMsg ${PWD}/${USR_CONFIG})";
+    errMsg "Release config do not exits $(keyMsg ${PWD}/${USR_CONFIG})";
 fi
 
 # User configuration
@@ -144,7 +155,7 @@ esac
 
 # Semantic version file to sync
 if [ ! -f ${VS_VFILE} ]; then
-    errMsg "Do not exits semantic version file $(keyMsg ${VS_VFILE})";
+    errMsg "Do not exits repo info file $(keyMsg ${VS_VFILE})";
 fi
 
 # The version & config file should be one file of the repo subdirectory
@@ -167,9 +178,9 @@ USR_CONFIG=${REPO_DIR}/${isRepoFile};
 infoMsg "----------------------------------------------------------------";
 infoMsg "Just Enter with nothing will use the default [value]";
 infoMsg "----------------------------------------------------------------";
-infoMsg "$(keyMsg ${VCS}):   Repo: $(valMsg ${REPO_DIR})";
-infoMsg "$(keyMsg ${VCS}): SemVer: $(valMsg ${VS_VFILE})";
-infoMsg "$(keyMsg ${VCS}): Config: $(valMsg ${USR_CONFIG})";
+infoMsg "$(keyMsg ${VCS}):     Repo: $(valMsg ${REPO_DIR})";
+infoMsg "$(keyMsg ${VCS}):   Config: $(valMsg ${USR_CONFIG})";
+infoMsg "$(keyMsg ${VCS}): RepoInfo: $(valMsg ${VS_VFILE})";
 
 # Software Release Life Cycle
 SRLC_REG="(([a-z]+)(-[a-z]+)*)(\.([0-9]+(\.[0-9]+)*))*";
@@ -200,33 +211,35 @@ The TWEAK format as following, like:
     ${SRLC_FMTB}
     ${SRLC_FMTC}";
 
-if [ "$(echo "${VS_MAJOR}" | grep '*')" != "" ]; then
-    VS_MAJOR=$(echo "${VS_MAJOR}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
-fi
+function escapeRegExpMetaChar()
+{
+    STR="$1";
 
-if [ "$(echo "${VS_MINOR}" | grep '*')" != "" ]; then
-    VS_MINOR=$(echo "${VS_MINOR}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
-fi
+    # (         \(
+    # )         \)
+    STR=$(escREMC '(' "$STR");
+    STR=$(escREMC ')' "$STR");
 
-if [ "$(echo "${VS_PATCH}" | grep '*')" != "" ]; then
-    VS_PATCH=$(echo "${VS_PATCH}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
-fi
+    # [         \[
+    # ]         \]
+    STR=$(escREMC '[' "$STR");
+    STR=$(escREMC ']' "$STR");
 
-if [ "$(echo "${VS_TWEAK}" | grep '*')" != "" ]; then
-    VS_TWEAK=$(echo "${VS_TWEAK}" | awk -F';' 'sub(/\*/,"\*",$1) { print $1; }');
-fi
+    # space     \s+
+    STR=$(escREMC ' ' "$STR");
+    STR=$(escREMC '\t' "$STR");
 
-# Escape meta-char for RegExp
-#   (   =>  \(
-# space =>  \s+
-_VS_MAJOR_=$(echo "${VS_MAJOR}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
-_VS_MINOR_=$(echo "${VS_MINOR}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
-_VS_PATCH_=$(echo "${VS_PATCH}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
-_VS_TWEAK_=$(echo "${VS_TWEAK}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) { print $1; }');
+    # *         \*
+    STR=$(escREMC '*' "$STR");
+
+    printf "${STR}";
+    return 0;
+}
+
+_VS_MAJOR_=$(escapeRegExpMetaChar "${VS_MAJOR}");
+_VS_MINOR_=$(escapeRegExpMetaChar "${VS_MINOR}");
+_VS_PATCH_=$(escapeRegExpMetaChar "${VS_PATCH}");
+_VS_TWEAK_=$(escapeRegExpMetaChar "${VS_TWEAK}");
 
 # Version RegExp Pattern
 REGEXP_MAJOR="^(${_VS_MAJOR_}\s+\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
@@ -237,6 +250,26 @@ debugMsg "$(keyMsg RegExp Major): [$(valMsg ${REGEXP_MAJOR})]";
 debugMsg "$(keyMsg RegExp Minor): [$(valMsg ${REGEXP_MINOR})]";
 debugMsg "$(keyMsg RegExp Patch): [$(valMsg ${REGEXP_PATCH})]";
 debugMsg "$(keyMsg RegExp Tweak): [$(valMsg ${REGEXP_TWEAK})]";
+
+VS_MAJOR=$(escREMC '*' "${VS_MAJOR}");
+VS_MINOR=$(escREMC '*' "${VS_MINOR}");
+VS_PATCH=$(escREMC '*' "${VS_PATCH}");
+VS_TWEAK=$(escREMC '*' "${VS_TWEAK}");
+
+VS_MAJOR=$(escREMC '[' "${VS_MAJOR}");
+VS_MINOR=$(escREMC '[' "${VS_MINOR}");
+VS_PATCH=$(escREMC '[' "${VS_PATCH}");
+VS_TWEAK=$(escREMC '[' "${VS_TWEAK}");
+
+VS_MAJOR=$(escREMC ']' "${VS_MAJOR}");
+VS_MINOR=$(escREMC ']' "${VS_MINOR}");
+VS_PATCH=$(escREMC ']' "${VS_PATCH}");
+VS_TWEAK=$(escREMC ']' "${VS_TWEAK}");
+
+debugMsg "$(keyMsg Key Major): [$(valMsg ${VS_MAJOR})]";
+debugMsg "$(keyMsg Key Minor): [$(valMsg ${VS_MINOR})]";
+debugMsg "$(keyMsg Key Patch): [$(valMsg ${VS_PATCH})]";
+debugMsg "$(keyMsg Key Tweak): [$(valMsg ${VS_TWEAK})]";
 
 # Get old semver
 VERSION_MAJOR=$(grep "${VS_MAJOR}" ${VS_VFILE} \
@@ -268,7 +301,9 @@ infoMsg "----------------------------------------------------------------";
 if ${isGitRepo}; then
     CURRENT_BRANCH=$(git status | head -n 1 | awk '{print $3}');
     infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
-    read -p "" usrInput;
+    usrInput="Y"; # default value for none interactive mode
+    ${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
+    ${IS_INTERACTIVE} && read -p "" usrInput;
     [ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
 
     if ! isYes "${usrInput}"; then
@@ -297,32 +332,34 @@ PREV_TWEAK_NUM="";
 # Update CHANGELOG.md & get next auto semver
 # SEMVER_TAG is like '1.2.3' or '1.2.3-1'
 CHANGELOG="CHANGELOG.md";
-if [ ! -f "${CHANGELOG}" ]; then
-    infoMsg "----------------------------------------------------------------";
-    infoMsgL "Changelog to update ($(keyMsg SKIP)) [$(valMsg ${CHANGELOG})]: ";
-    read -p "" usrInput;
+CHANGELOG_UPDATE=false;
+infoMsg "----------------------------------------------------------------";
+infoMsgL "Changelog to update ($(keyMsg SKIP)) [$(valMsg ${CHANGELOG})]: ";
+usrInput="CHANGELOG.md"; # default value for none interactive mode
+${IS_TESTING} && usrInput="CHANGELOG.md"; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
 
-    # Skip changelog update
-    if [ "${usrInput}" != "SKIP" ]; then
-        [ -n "${usrInput}" ] && CHANGELOG="${usrInput}";
+# Skip changelog update
+if [ "${usrInput}" != "SKIP" ]; then
+    CHANGELOG_UPDATE=true;
+    [ -n "${usrInput}" ] && CHANGELOG="${usrInput}";
 
-        fullPath=$(realpath -m ${CHANGELOG});
-        isRepoFile=${fullPath#${REPO_DIR}/};
-        if [ "${isRepoFile}" = "${fullPath}" ]; then
-            errMsg "$(valMsg ${fullPath}) NOT in the repo
-           $(keyMsg ${REPO_DIR})";
-        fi
-        CHANGELOG=${isRepoFile}; # Relative path of repo
-
-        if [ ! -f "${CHANGELOG}" ]; then
-            pathName=$(dirname ${CHANGELOG});
-            [ ! -e "${pathName}" ] && mkdir -p ${pathName};
-            touch "${CHANGELOG}";
-        fi
+    fullPath=$(realpath -m ${CHANGELOG});
+    isRepoFile=${fullPath#${REPO_DIR}/};
+    if [ "${isRepoFile}" = "${fullPath}" ]; then
+        errMsg "$(valMsg ${fullPath}) NOT in the repo
+        $(keyMsg ${REPO_DIR})";
     fi
+    CHANGELOG=${isRepoFile}; # Relative path of repo
 fi
 
-SEMVER_TAG=$(standard-release -x -c ${CHANGELOG} 2>/dev/null | head -n 1 \
+if [ ! -f "${CHANGELOG}" ]; then
+    pathName=$(dirname ${CHANGELOG});
+    [ ! -e "${pathName}" ] && mkdir -p ${pathName};
+    touch "${CHANGELOG}";
+fi
+
+SEMVER_TAG=$(standard-release -x -f SKIP -c ${CHANGELOG} 2>/dev/null | head -n 1 \
     | awk -F':' 'gsub(/[ ]/,"",$2) { print $2; }');
 [ -n "${SEMVER_TAG}" ] \
     || errMsg "Get auto semver failed, try install npm $(keyMsg standard-release)";
@@ -390,7 +427,9 @@ BUMP_SEMVER_BY_USER=true;
 infoMsg "----------------------------------------------------------------";
 infoMsg "SemVer NEW => Major(${_major_})\tMinor(${_minor_})\tPatch(${_patch_})\tTweak(${_tweak_})";
 infoMsgL "Use NEW Semantic Version (y/n) [y]: ";
-read -p "" usrInput;
+usrInput="Y"; # default value for none interactive mode
+${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
 [ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
 if isYes "${usrInput}"; then
     BUMP_SEMVER=true;
@@ -407,7 +446,8 @@ fi
 if ${BUMP_SEMVER_BY_USER}; then
     # The final major
     infoMsgL "Major (New Major) [$(valMsg ${VERSION_MAJOR})]: ";
-    read -p "" usrInput;
+    usrInput=""; # default value for none interactive mode
+    ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -422,7 +462,8 @@ if ${BUMP_SEMVER_BY_USER}; then
 
     # The final minor
     infoMsgL "Minor (New Minor) [$(valMsg ${VERSION_MINOR})]: ";
-    read -p "" usrInput;
+    usrInput=""; # default value for none interactive mode
+    ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -437,7 +478,8 @@ if ${BUMP_SEMVER_BY_USER}; then
 
     # The final patch
     infoMsgL "Patch (New Patch) [$(valMsg ${VERSION_PATCH})]: ";
-    read -p "" usrInput;
+    usrInput=""; # default value for none interactive mode
+    ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -452,7 +494,8 @@ if ${BUMP_SEMVER_BY_USER}; then
 
     # The final tweak
     infoMsgL "Tweak (New Tweak or $(keyMsg SKIP)) [$(valMsg ${VERSION_TWEAK})]: ";
-    read -p "" usrInput;
+    usrInput=""; # default value for none interactive mode
+    ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -530,9 +573,12 @@ if ${isGitRepo}; then
     done
 fi
 
-# Sync CHANGELOG.md release tag to the one really used
-${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" ${CHANGELOG}
-rm ${CHANGELOG}.bk;
+if $CHANGELOG_UPDATE; then
+    standard-release -x -c ${CHANGELOG} 2>&1 >/dev/null
+    # Sync CHANGELOG.md release tag to the one really used
+    ${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" ${CHANGELOG}
+    rm ${CHANGELOG}.bk;
+fi
 
 infoMsg "----------------------------------------------------------------";
 _major_="$(valMsg ${VERSION_MAJOR})";
@@ -627,21 +673,27 @@ fi
 
 infoMsg "----------------------------------------------------------------";
 infoMsgL "Show $(valMsg ${CHANGELOG}) diff (y/n) [n]: ";
-read -p "" usrInput;
+usrInput="N"; # default value for none interactive mode
+${IS_TESTING} && usrInput="N"; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
 if isYes "${usrInput}"; then
     ${isGitRepo} && git diff ${CHANGELOG};
 fi
 
 infoMsg "----------------------------------------------------------------";
 infoMsgL "Show $(valMsg ${VS_VFILE}) diff (y/n) [n]: ";
-read -p "" usrInput;
+usrInput="N"; # default value for none interactive mode
+${IS_TESTING} && usrInput="N"; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
 if isYes "${usrInput}"; then
     ${isGitRepo} && git diff ${VS_VFILE};
 fi
 
 infoMsg "----------------------------------------------------------------";
 infoMsgL "Build the project (Build Command or $(keyMsg SKIP)) [make]: ";
-read -p "" usrInput;
+usrInput="make"; # default value for none interactive mode
+${IS_TESTING} && usrInput="SKIP"; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
 [ -z "${usrInput}" ] && usrInput='make'; # Just Enter
 if [ "${usrInput}" != "SKIP" ]; then
     ${usrInput}; # the project build command
@@ -649,14 +701,16 @@ fi
 
 infoMsg "----------------------------------------------------------------";
 infoMsgL "Run programme to confirm (Command to run) []: ";
-read -p "" usrInput;
+usrInput=""; # default value for none interactive mode
+${IS_TESTING} && usrInput=""; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
 if [ -n "${usrInput}" ]; then
     ${usrInput}; # the executable programme to run
 fi
 
 # Commit & Tag
-TAG_HDR="chore(auto): tag ${RELEASE_TAG}";
-CMT_HDR="chore(auto): release ${RELEASE_TAG}";
+TAG_HDR="chore(auto1): tag ${RELEASE_TAG}";
+CMT_HDR="chore(auto2): release ${RELEASE_TAG}";
 MSG_BDY="
 
 - Detail changes see ${CHANGELOG}
@@ -667,15 +721,17 @@ COMMIT_MSG="${CMT_HDR}${MSG_BDY}";
 
 infoMsg "----------------------------------------------------------------";
 infoMsg "The message for signed-off commit";
-printf "$(msgGreen "${COMMIT_MSG}")\n";
+! ${IS_TESTING} && printf "$(msgGreen "${COMMIT_MSG}")\n";
 
 infoMsg "The message for signed annotated tag";
-printf "$(msgGreen "${TAG_MSG}")\n";
+! ${IS_TESTING} && printf "$(msgGreen "${TAG_MSG}")\n";
 
 # Really want to do this
 infoMsg "----------------------------------------------------------------";
 infoMsgL "Confirm $(valMsg ${VCS}) commit & tag (y/n) [n]: ";
-read -p "" usrInput;
+usrInput="N"; # default value for none interactive mode
+${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
 if isNo "${usrInput}"; then
     errMsg "Release stop, confirm with $(keyMsg y) or $(keyMsg Y)";
 fi
@@ -685,10 +741,13 @@ if isYes "${usrInput}"; then
         git add ${VS_VFILE};  # Update version
         git add ${CHANGELOG}; # Update changelog
 
-        # Do release commit
-        git commit --signoff -m "${COMMIT_MSG}";
-        # Do release tag
-        git tag --sign -a "${RELEASE_TAG}" -m "${TAG_MSG}";
+        if ${IS_TESTING}; then
+            git commit -m "${COMMIT_MSG}"  2>&1 > /dev/null;
+            git tag -a "${RELEASE_TAG}" -m "${TAG_MSG}" 2>&1 > /dev/null;
+        else
+            git commit --signoff -m "${COMMIT_MSG}";
+            git tag --sign -a "${RELEASE_TAG}" -m "${TAG_MSG}";
+        fi
     fi
 fi
 

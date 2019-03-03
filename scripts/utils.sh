@@ -545,3 +545,66 @@ function usage_example_numAPIs()
     echo "Max: $(maxNum ${Nums})";
     echo "Sum: $(sumNum ${Nums})";
 }
+
+###########################
+# Escape RegExp Meta Char #
+###########################
+function escREMC()
+{
+    REMC="$1"; # meta char to escape
+    RSTR="$2"; # the relelar expression
+
+    hasMC="";
+    RE_space="";
+    if [ "$REMC" = "[" ]; then
+        hasMC=$(echo "${RSTR}" | grep "\\${REMC}")
+    else
+        if [ "$REMC" = " " ]; then
+            RE_space="\s+";
+        elif [ "$REMC" = "	" ]; then # \t
+            RE_space="\s+";
+        elif [ "$REMC" = "\t" ]; then # \t
+            REMC="	"; # \t
+            RE_space="\s+";
+        fi
+
+        # *, (, ), ]
+        hasMC=$(echo "${RSTR}" | grep "${REMC}")
+    fi
+
+    # output is like: gsub(/\*/,"\*",$1) { print $1; }
+    AWK_ARGS="gsub(/""\\${REMC}/,"\""\\"${REMC}""\"",\$1) { print \$1; }";
+    if [ "${RE_space}" != "" ]; then
+        AWK_ARGS="gsub(/""\\${REMC}/,"\""\\""s+"\"",\$1) { print \$1; }";
+    fi
+
+    if [ "${hasMC}" != "" ]; then
+        RV=$(echo "${RSTR}" | awk -F';' "${AWK_ARGS}");
+        printf "${RV}";
+    else
+        printf "${RSTR}";
+    fi
+
+    return 0;
+}
+
+# Example Usage
+function usage_escREMC()
+{
+    aa=$(escREMC '*' "int *xy=")
+    echo "*         $aa"
+    aa=$(escREMC '(' "int aa(AA)")
+    echo "(         $aa"
+    aa=$(escREMC ')' "int BB(BB)")
+    echo ")         $aa"
+    aa=$(escREMC '[' "int cc[CC]")
+    echo "[         $aa"
+    aa=$(escREMC ']' "int dd[DD]")
+    echo "]         $aa"
+    aa=$(escREMC ' ' "int ee[EE]")
+    echo "space     $aa"
+    aa=$(escREMC '	' "int	xy[BB]")
+    echo "vt        $aa"
+    aa=$(escREMC '\t' "int	xy[BB]")
+    echo "\\t        $aa"
+}

@@ -48,3 +48,18 @@ VS_HOST_NAME="static const char *host_name =";
 VS_HOST_USER="static const char *host_user =";
 # The build host system name and version
 VS_HOST_OSNV="static const char *host_osnv =";
+
+# Semantic version
+# Version should consist of MAJOR/MINOR/PATCH/TWEAK
+#   The MAJOR, MINOR, PATCH must consit of numbers of [0-9]
+#   TWEAK is pre-release part, consist of [a-z0-9.-]
+# Each line must has one, like the following
+#   MAJOR   Can not ignore, must be 0 ~ 9
+#   MINOR   Can not ignore, must be 0 ~ 9
+#   PATCH   Can not ignore, must be 0 ~ 9
+#   TWEAK   Can be ignored, consist of [a-z0-9.-]
+
+VS_MAJOR="static const char *semver_major =";
+VS_MINOR="static const char *semver_minor =";
+VS_PATCH="static const char *semver_patch =";
+VS_TWEAK="static const char *semver_tweak =";

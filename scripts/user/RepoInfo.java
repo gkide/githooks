@@ -18,14 +18,27 @@ public class RepoInfo {
     static public final String repoHash = "615"; // SVN Reversion or Git Commit Hash
     static public final String repoUrl = "svn://addr/app/trunk/mta"; // remote repo url
 
+    // semantic version
+    static public final long major = 11;
+    static public final long minor = 22;
+    static public final long patch = 33;
+    static public final String tweak = "alpha";
+
     public static void main(String[] args) {
         System.out.println(hostName);
         System.out.println(hostUser);
         System.out.println(hostOsNV);
+
         System.out.println(buildUser);
         System.out.println(buildTime);
+
         System.out.println(modifyTime);
         System.out.println(repoHash);
         System.out.println(repoUrl);
+
+        System.out.println(major);
+        System.out.println(minor);
+        System.out.println(patch);
+        System.out.println(tweak);
     }
 }
