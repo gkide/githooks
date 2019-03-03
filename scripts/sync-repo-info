@@ -127,6 +127,7 @@ USR_CONFIG=${REPO_DIR}/${isRepoFile};
     SVN_LOGMSG=$(svn log)
     SVN_LOGMSG=$(echo "${SVN_LOGMSG}" | head -n 2 | tail -n 1)
     __USER_NAME=$(echo "${SVN_LOGMSG}" | awk -F'|' 'gsub(/ /,"",$2) { print $2; }')
+    [ "$__USER_NAME" = "(noauthor)" ] && __USER_NAME="";
 }
 
 # Get GIT repo info
@@ -166,7 +167,16 @@ HOST_NAME="$(getHostName)";
 HOST_OSNV="$(getHostOSNV)";
 
 BUILD_TIME="$(getBuildTime)";
-BUILD_USER="${USER_NAME} <${USER_EMAIL}>";
+
+if [ "${USER_NAME}" != "" -a "${USER_EMAIL}" != "" ]; then
+    BUILD_USER="${USER_NAME} <${USER_EMAIL}>";
+elif [ "${USER_NAME}" != "" -a "${USER_EMAIL}" = "" ]; then
+    BUILD_USER="${USER_NAME}";
+elif [ "${USER_NAME}" = "" -a "${USER_EMAIL}" != "" ]; then
+    BUILD_USER="${USER_EMAIL}";
+else
+    BUILD_USER="";
+fi
 
 infoMsg "----------------------------------------------------------------";
 infoMsg "$(keyMsg ${VCS}): Config: $(valMsg ${USR_CONFIG})";
