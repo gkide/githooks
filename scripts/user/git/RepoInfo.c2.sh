@@ -11,6 +11,8 @@
 #    USER_EMAIL="email@my.com"
 # 2. This current file & ${VS_VFILE} should be files of the git repo
 
+USER_NAME="user-name-by-hand"
+
 # Repo root directory, full path
 REPO_VCS="GIT";
 REPO_DIR="$(git rev-parse --show-toplevel)";

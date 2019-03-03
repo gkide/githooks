@@ -11,6 +11,8 @@
 #    USER_EMAIL="email@my.com"
 # 2. This current file & ${VS_VFILE} should be files of the git repo
 
+USER_EMAIL="user.email.by.hand@my.com"
+
 # Repo root directory, full path
 REPO_VCS="SVN";
 REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }');
