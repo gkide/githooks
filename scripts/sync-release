@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-REPO_HOOKS_VERSION="v0.1.0";
+REPO_HOOKS_VERSION="v0.1.1";
 # https://github.com/gkide/repo-hooks
 
 # Semantic Version
@@ -349,11 +349,11 @@ _major_="$(valMsg ${VERSION_MAJOR})";
 _minor_="$(valMsg ${VERSION_MINOR})";
 _patch_="$(valMsg ${VERSION_PATCH})";
 _tweak_="$(valMsg ${VERSION_TWEAK})";
-infoMsg "----------------------------------------------------------------";
 
 # Check release branch for GIT repo
 if ${isGitRepo}; then
     CURRENT_BRANCH=$(git status | head -n 1 | awk '{print $3}');
+    infoMsg "----------------------------------------------------------------";
     infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
     usrInput="Y"; # default value for none interactive mode
     ${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
@@ -365,7 +365,10 @@ if ${isGitRepo}; then
     fi
 fi
 
-infoMsg "SemVer OLD => Major(${_major_})\tMinor(${_minor_})\tPatch(${_patch_})\tTweak(${_tweak_})";
+o_major="${_major_}"
+o_minor="${_minor_}"
+o_patch="${_patch_}"
+o_tweak="${_tweak_}"
 
 PREV_TWEAK_TXT="";
 PREV_TWEAK_NUM="";
@@ -387,8 +390,7 @@ PREV_TWEAK_NUM="";
 # SEMVER_TAG is like '1.2.3' or '1.2.3-1'
 CHANGELOG="CHANGELOG.md";
 CHANGELOG_UPDATE=false;
-infoMsg "----------------------------------------------------------------";
-infoMsgL "Changelog to update ($(keyMsg SKIP)) [$(valMsg ${CHANGELOG})]: ";
+infoMsgL "Update changelog ($(keyMsg SKIP)) [$(valMsg ${CHANGELOG})]: ";
 usrInput="CHANGELOG.md"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="CHANGELOG.md"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
@@ -476,10 +478,16 @@ if [ "${PREV_TWEAK}" != "${AUTO_PREREL}" ]; then
     fi
 fi
 
+n_major="${_major_}"
+n_minor="${_minor_}"
+n_patch="${_patch_}"
+n_tweak="${_tweak_}"
+
 BUMP_SEMVER=false;
 BUMP_SEMVER_BY_USER=true;
 infoMsg "----------------------------------------------------------------";
-infoMsg "SemVer NEW => Major(${_major_})\tMinor(${_minor_})\tPatch(${_patch_})\tTweak(${_tweak_})";
+infoMsg "SemVer OLD => Major(${o_major})\tMinor(${o_minor})\tPatch(${o_patch})\tTweak(${o_tweak})";
+infoMsg "SemVer NEW => Major(${n_major})\tMinor(${n_minor})\tPatch(${n_patch})\tTweak(${n_tweak})";
 infoMsgL "Use NEW Semantic Version (y/n) [y]: ";
 usrInput="Y"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
@@ -499,7 +507,7 @@ fi
 
 if ${BUMP_SEMVER_BY_USER}; then
     # The final major
-    infoMsgL "Major (New Major) [$(valMsg ${VERSION_MAJOR})]: ";
+    infoMsgL "New SemVer Major [$(valMsg ${VERSION_MAJOR})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
@@ -515,7 +523,7 @@ if ${BUMP_SEMVER_BY_USER}; then
     esac
 
     # The final minor
-    infoMsgL "Minor (New Minor) [$(valMsg ${VERSION_MINOR})]: ";
+    infoMsgL "New SemVer Minor [$(valMsg ${VERSION_MINOR})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
@@ -531,7 +539,7 @@ if ${BUMP_SEMVER_BY_USER}; then
     esac
 
     # The final patch
-    infoMsgL "Patch (New Patch) [$(valMsg ${VERSION_PATCH})]: ";
+    infoMsgL "New SemVer Patch [$(valMsg ${VERSION_PATCH})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
@@ -547,7 +555,7 @@ if ${BUMP_SEMVER_BY_USER}; then
     esac
 
     # The final tweak
-    infoMsgL "Tweak (New Tweak or $(keyMsg SKIP)) [$(valMsg ${VERSION_TWEAK})]: ";
+    infoMsgL "New SemVer Tweak ($(keyMsg SKIP)) [$(valMsg ${VERSION_TWEAK})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
     case "${usrInput}" in
@@ -627,14 +635,6 @@ if ${isGitRepo}; then
     done
 fi
 
-if $CHANGELOG_UPDATE; then
-    standard-release -x -c ${CHANGELOG} 2>&1 >/dev/null
-    # Sync CHANGELOG.md release tag to the one really used
-    ${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" ${CHANGELOG}
-    rm ${CHANGELOG}.bk;
-fi
-
-infoMsg "----------------------------------------------------------------";
 _major_="$(valMsg ${VERSION_MAJOR})";
 [ "${PREV_MAJOR}" != "${VERSION_MAJOR}" ] \
     && _major_="$(msgRed ${VERSION_MAJOR})";
@@ -708,6 +708,7 @@ if ${isGitRepo}; then
     [ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit";
 fi
 
+infoMsg "----------------------------------------------------------------";
 infoMsg "Recently tag : $(msgRed ${LATEST_TAG})";
 infoMsg "Release  tag : $(valMsg ${RELEASE_TAG})";
 infoMsg "Release major: $(valMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
@@ -726,6 +727,22 @@ if ${BUMP_SEMVER}; then
 fi
 
 infoMsg "----------------------------------------------------------------";
+SRA_R=""; # standard-release arguments for changelog release
+infoMsgL "Changelog $(keyMsg Release) or $(keyMsg Unreleased) (y/n) [n]: ";
+usrInput="N"; # default value for none interactive mode
+${IS_TESTING} && usrInput="N"; # testing & none interactive mode
+${IS_INTERACTIVE} && read -p "" usrInput;
+if isYes "${usrInput}"; then
+    SRA_R="-r";
+fi
+
+if $CHANGELOG_UPDATE; then
+    standard-release -x ${SRA_R} -c ${CHANGELOG} 2>&1 >/dev/null
+    # Sync CHANGELOG.md release tag to the one really used
+    ${_sed} -i.bk "s/${SEMVER_TAG}/${RELEASE_TAG}/g" ${CHANGELOG}
+    rm ${CHANGELOG}.bk;
+fi
+
 infoMsgL "Show $(valMsg ${CHANGELOG}) diff (y/n) [n]: ";
 usrInput="N"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="N"; # testing & none interactive mode
