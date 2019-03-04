@@ -21,12 +21,14 @@ REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }');
 VS_VFILE="${REPO_DIR}/RepoInfo.cc";
 
 # NOTE
-# The following value's special chars will be escaped or replaced
-# - space     \s+
-# - ()        \(
-# - *         \*
-# - [         \[
-# - ]         \]
+# The following value's special chars will be auto escaped
+# user    =>    auto
+# space         \s+
+# ()            \(
+# *             \*
+# [             \[
+# ]             \]
+# .             .       regular expression meta char for only one char
 
 # Remote repo URL
 VS_REPO_URL="const std::string RepoInfo::repoUrl =";
@@ -65,3 +67,4 @@ VS_MAJOR="const long RepoInfo::major =";
 VS_MINOR="const long RepoInfo::minor =";
 VS_PATCH="const long RepoInfo::patch =";
 VS_TWEAK="const std::string RepoInfo::tweak =";
+VS_SEMVER="const std::string RepoInfo::semver =";

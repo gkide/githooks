@@ -22,3 +22,5 @@
 #define SEMVER_MINOR   22
 #define SEMVER_PATCH   33
 #define SEMVER_TWEAK   "alpha"
+
+#define SEMVER_VERSION "11.22.33-alpha"

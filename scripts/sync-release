@@ -216,6 +216,13 @@ function escapeRegExpMetaChar()
 {
     STR="$1";
 
+    # *         \*
+    STR=$(escREMC '*' "$STR");
+
+    # space     \s+
+    STR=$(escREMC ' ' "$STR");
+    STR=$(escREMC '\t' "$STR");
+
     # (         \(
     # )         \)
     STR=$(escREMC '(' "$STR");
@@ -226,61 +233,107 @@ function escapeRegExpMetaChar()
     STR=$(escREMC '[' "$STR");
     STR=$(escREMC ']' "$STR");
 
-    # space     \s+
-    STR=$(escREMC ' ' "$STR");
-    STR=$(escREMC '\t' "$STR");
-
-    # *         \*
-    STR=$(escREMC '*' "$STR");
-
     printf "${STR}";
     return 0;
 }
 
-_VS_MAJOR_=$(escapeRegExpMetaChar "${VS_MAJOR}");
-_VS_MINOR_=$(escapeRegExpMetaChar "${VS_MINOR}");
-_VS_PATCH_=$(escapeRegExpMetaChar "${VS_PATCH}");
-_VS_TWEAK_=$(escapeRegExpMetaChar "${VS_TWEAK}");
+isDefined="$(echo ${VS_MAJOR-NotDefine})"
+if [ "${isDefined}" = "NotDefine" ]; then
+    _VS_MAJOR_="XX_YY_ZZ_NOT_USED_MAJOR";
+else
+    _VS_MAJOR_=$(escapeRegExpMetaChar "${VS_MAJOR}");
+    VS_MAJOR=$(escREMC '*' "${VS_MAJOR}");
+    VS_MAJOR=$(escREMC '[' "${VS_MAJOR}");
+    VS_MAJOR=$(escREMC ']' "${VS_MAJOR}");
+    debugMsg "$(keyMsg Key Major): [$(valMsg ${VS_MAJOR})]";
+fi
+
+isDefined="$(echo ${VS_MINOR-NotDefine})"
+if [ "${isDefined}" = "NotDefine" ]; then
+    _VS_MINOR_="XX_YY_ZZ_NOT_USED_MINOR";
+else
+    _VS_MINOR_=$(escapeRegExpMetaChar "${VS_MINOR}");
+    VS_MINOR=$(escREMC '*' "${VS_MINOR}");
+    VS_MINOR=$(escREMC '[' "${VS_MINOR}");
+    VS_MINOR=$(escREMC ']' "${VS_MINOR}");
+    debugMsg "$(keyMsg Key Minor): [$(valMsg ${VS_MINOR})]";
+
+fi
+
+isDefined="$(echo ${VS_PATCH-NotDefine})"
+if [ "${isDefined}" = "NotDefine" ]; then
+    _VS_PATCH_="XX_YY_ZZ_NOT_USED_PATCH";
+else
+    _VS_PATCH_=$(escapeRegExpMetaChar "${VS_PATCH}");
+    VS_PATCH=$(escREMC '*' "${VS_PATCH}");
+    VS_PATCH=$(escREMC '[' "${VS_PATCH}");
+    VS_PATCH=$(escREMC ']' "${VS_PATCH}");
+    debugMsg "$(keyMsg Key Patch): [$(valMsg ${VS_PATCH})]";
+fi
+
+isDefined="$(echo ${VS_TWEAK-NotDefine})"
+if [ "${isDefined}" = "NotDefine" ]; then
+    _VS_TWEAK_="XX_YY_ZZ_NOT_USED_TWEAK";
+else
+    _VS_TWEAK_=$(escapeRegExpMetaChar "${VS_TWEAK}");
+    VS_TWEAK=$(escREMC '*' "${VS_TWEAK}");
+    VS_TWEAK=$(escREMC '[' "${VS_TWEAK}");
+    VS_TWEAK=$(escREMC ']' "${VS_TWEAK}");
+    debugMsg "$(keyMsg Key Tweak): [$(valMsg ${VS_TWEAK})]";
+fi
+
+isDefined="$(echo ${VS_SEMVER-NotDefine})"
+if [ "${isDefined}" = "NotDefine" ]; then
+    _VS_SEMVER_="XX_YY_ZZ_NOT_USED_SEMVER";
+else
+    _VS_SEMVER_=$(escapeRegExpMetaChar "${VS_SEMVER}");
+
+    VS_SEMVER=$(escREMC '*' "${VS_SEMVER}");
+    VS_SEMVER=$(escREMC '[' "${VS_SEMVER}");
+    VS_SEMVER=$(escREMC ']' "${VS_SEMVER}");
+    VS_SEMVER=$(escREMC ' ' "$VS_SEMVER");
+    VS_SEMVER=$(escREMC '\t' "$VS_SEMVER");
+fi
 
 # Version RegExp Pattern
-REGEXP_MAJOR="^(${_VS_MAJOR_}\s+\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
-REGEXP_MINOR="^(${_VS_MINOR_}\s+\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
-REGEXP_PATCH="^(${_VS_PATCH_}\s+\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
-REGEXP_TWEAK="^(${_VS_TWEAK_}\s+\\\"*'*)([0-9a-z\.-]+)*('*\\\"*\s*.*)$";
+REGEXP_MAJOR="^(${_VS_MAJOR_}\s*\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
+REGEXP_MINOR="^(${_VS_MINOR_}\s*\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
+REGEXP_PATCH="^(${_VS_PATCH_}\s*\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
+REGEXP_TWEAK="^(${_VS_TWEAK_}\s*\\\"*'*)([0-9a-z\.-]+)*('*\\\"*\s*.*)$";
+REGEXP_SEMVER="^(${_VS_SEMVER_}\s*\\\"*'*)([A-Za-z0-9\.\+-]+)('*\\\"*\s*.*)$";
+
 debugMsg "$(keyMsg RegExp Major): [$(valMsg ${REGEXP_MAJOR})]";
 debugMsg "$(keyMsg RegExp Minor): [$(valMsg ${REGEXP_MINOR})]";
 debugMsg "$(keyMsg RegExp Patch): [$(valMsg ${REGEXP_PATCH})]";
 debugMsg "$(keyMsg RegExp Tweak): [$(valMsg ${REGEXP_TWEAK})]";
+debugMsg "$(keyMsg RegExp SemVer): [$(valMsg ${REGEXP_SEMVER})]";
 
-VS_MAJOR=$(escREMC '*' "${VS_MAJOR}");
-VS_MINOR=$(escREMC '*' "${VS_MINOR}");
-VS_PATCH=$(escREMC '*' "${VS_PATCH}");
-VS_TWEAK=$(escREMC '*' "${VS_TWEAK}");
+# Old Semver
+if [ "$_VS_SEMVER_" != "XX_YY_ZZ_NOT_USED_SEMVER" ]; then
+    VERSION_SEMVER=$(grep "${VS_SEMVER}" ${VS_VFILE} \
+        | ${_sed} "s/${REGEXP_SEMVER}/\2/");
+    debugMsg "$(keyMsg SemVer): [$(valMsg ${VERSION_SEMVER})]";
 
-VS_MAJOR=$(escREMC '[' "${VS_MAJOR}");
-VS_MINOR=$(escREMC '[' "${VS_MINOR}");
-VS_PATCH=$(escREMC '[' "${VS_PATCH}");
-VS_TWEAK=$(escREMC '[' "${VS_TWEAK}");
-
-VS_MAJOR=$(escREMC ']' "${VS_MAJOR}");
-VS_MINOR=$(escREMC ']' "${VS_MINOR}");
-VS_PATCH=$(escREMC ']' "${VS_PATCH}");
-VS_TWEAK=$(escREMC ']' "${VS_TWEAK}");
-
-debugMsg "$(keyMsg Key Major): [$(valMsg ${VS_MAJOR})]";
-debugMsg "$(keyMsg Key Minor): [$(valMsg ${VS_MINOR})]";
-debugMsg "$(keyMsg Key Patch): [$(valMsg ${VS_PATCH})]";
-debugMsg "$(keyMsg Key Tweak): [$(valMsg ${VS_TWEAK})]";
-
-# Get old semver
-VERSION_MAJOR=$(grep "${VS_MAJOR}" ${VS_VFILE} \
-    | ${_sed} "s/${REGEXP_MAJOR}/\2/");
-VERSION_MINOR=$(grep "${VS_MINOR}" ${VS_VFILE} \
-    | ${_sed} "s/${REGEXP_MINOR}/\2/");
-VERSION_PATCH=$(grep "${VS_PATCH}" ${VS_VFILE} \
-    | ${_sed} "s/${REGEXP_PATCH}/\2/");
-VERSION_TWEAK=$(grep "${VS_TWEAK}" ${VS_VFILE} \
-    | ${_sed} "s/${REGEXP_TWEAK}/\2/");
+    VERSION_MAJOR=$(echo "${VERSION_SEMVER}" \
+        | ${_sed} "s/([0-9]+)\.([0-9]+)\.([0-9]+)([A-Za-z0-9\.\+-]+)*/\1/");
+    VERSION_MINOR=$(echo "${VERSION_SEMVER}" \
+        | ${_sed} "s/([0-9]+)\.([0-9]+)\.([0-9]+)([A-Za-z0-9\.\+-]+)*/\2/");
+    VERSION_PATCH=$(echo "${VERSION_SEMVER}" \
+        | ${_sed} "s/([0-9]+)\.([0-9]+)\.([0-9]+)([A-Za-z0-9\.\+-]+)*/\3/");
+    VERSION_TWEAK=$(echo "${VERSION_SEMVER}" \
+        | ${_sed} "s/([0-9]+)\.([0-9]+)\.([0-9]+)([A-Za-z0-9\.\+-]+)*/\4/");
+    VERSION_TWEAK=$(echo "${VERSION_TWEAK}" \
+        | awk 'sub(/\-/,"",$1) sub(/\+/,"",$1) { print $1; }');
+else
+    VERSION_MAJOR=$(grep "${VS_MAJOR}" ${VS_VFILE} \
+        | ${_sed} "s/${REGEXP_MAJOR}/\2/");
+    VERSION_MINOR=$(grep "${VS_MINOR}" ${VS_VFILE} \
+        | ${_sed} "s/${REGEXP_MINOR}/\2/");
+    VERSION_PATCH=$(grep "${VS_PATCH}" ${VS_VFILE} \
+        | ${_sed} "s/${REGEXP_PATCH}/\2/");
+    VERSION_TWEAK=$(grep "${VS_TWEAK}" ${VS_VFILE} \
+        | ${_sed} "s/${REGEXP_TWEAK}/\2/");
+fi
 
 if [ -z "${VERSION_MAJOR}" -o -z "{$VERSION_MINOR}" -o -z "${VERSION_PATCH}" ]; then
     errMsg "Get semantic version from $(keyMsg ${VS_VFILE}) failed";
@@ -662,13 +715,13 @@ infoMsg "Release minor: $(valMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
 infoMsg "Release patch: $(valMsg ${PREV_PATCH})${indentC}=> ${_patch_}";
 infoMsg "Release tweak: $(valMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
 
+# Update Version
 if ${BUMP_SEMVER}; then
-    # Update Version
     ${_sed} -i.bk "s/${REGEXP_MAJOR}/\1${VERSION_MAJOR}\3/" ${VS_VFILE};
     ${_sed} -i.bk "s/${REGEXP_MINOR}/\1${VERSION_MINOR}\3/" ${VS_VFILE};
     ${_sed} -i.bk "s/${REGEXP_PATCH}/\1${VERSION_PATCH}\3/" ${VS_VFILE};
     ${_sed} -i.bk "s/${REGEXP_TWEAK}/\1${VERSION_TWEAK}\3/" ${VS_VFILE};
-
+    ${_sed} -i.bk "s/${REGEXP_SEMVER}/\1${RELEASE_TAG}\3/" ${VS_VFILE};
     rm ${VS_VFILE}.bk;
 fi
 

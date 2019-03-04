@@ -23,6 +23,7 @@ public class RepoInfo {
     static public final long minor = 22;
     static public final long patch = 33;
     static public final String tweak = "alpha";
+    static public final String semver = "11.22.33-alpha";
 
     public static void main(String[] args) {
         System.out.println(hostName);
@@ -40,5 +41,6 @@ public class RepoInfo {
         System.out.println(minor);
         System.out.println(patch);
         System.out.println(tweak);
+        System.out.println(semver);
     }
 }

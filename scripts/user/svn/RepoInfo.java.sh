@@ -19,12 +19,14 @@ REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }');
 VS_VFILE="${REPO_DIR}/RepoInfo.java";
 
 # NOTE
-# The following value's special chars will be escaped or replaced
-# - space     \s+
-# - ()        \(
-# - *         \*
-# - [         \[
-# - ]         \]
+# The following value's special chars will be auto escaped
+# user    =>    auto
+# space         \s+
+# ()            \(
+# *             \*
+# [             \[
+# ]             \]
+# .             .       regular expression meta char for only one char
 
 # Remote repo URL
 VS_REPO_URL=" static public final String repoUrl =";
@@ -63,3 +65,4 @@ VS_MAJOR=" static public final long major =";
 VS_MINOR=" static public final long minor =";
 VS_PATCH=" static public final long patch =";
 VS_TWEAK=" static public final String tweak =";
+VS_SEMVER=" static public final String semver =";

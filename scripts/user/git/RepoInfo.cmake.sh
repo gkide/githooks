@@ -22,12 +22,14 @@ REPO_DIR="$(git rev-parse --show-toplevel)";
 VS_VFILE="${REPO_DIR}/RepoInfo.cmake1";
 
 # NOTE
-# The following value's special chars will be escaped or replaced
-# - space     \s+
-# - ()        \(
-# - *         \*
-# - [         \[
-# - ]         \]
+# The following value's special chars will be auto escaped
+# user    =>    auto
+# space         \s+
+# ()            \(
+# *             \*
+# [             \[
+# ]             \]
+# .             .       regular expression meta char for only one char
 
 # Remote repo URL
 VS_REPO_URL="set(MY_REPO_URL"
@@ -66,3 +68,4 @@ VS_MAJOR="set(MY_SEMVER_MAJOR"
 VS_MINOR="set(MY_SEMVER_MINOR"
 VS_PATCH="set(MY_SEMVER_PATCH"
 VS_TWEAK="set(MY_SEMVER_TWEAK"
+VS_SEMVER="set(MY_SEMVER_SEMVER"

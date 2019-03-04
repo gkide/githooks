@@ -19,12 +19,14 @@ REPO_DIR="$(git rev-parse --show-toplevel)";
 VS_VFILE="${REPO_DIR}/RepoInfo.c1";
 
 # NOTE
-# The following value's special chars will be escaped or replaced
-# - space     \s+
-# - ()        \(
-# - *         \*
-# - [         \[
-# - ]         \]
+# The following value's special chars will be auto escaped
+# user    =>    auto
+# space         \s+
+# ()            \(
+# *             \*
+# [             \[
+# ]             \]
+# .             .       regular expression meta char for only one char
 
 # Remote repo URL
 VS_REPO_URL="static const char *repo_url =";
@@ -63,3 +65,4 @@ VS_MAJOR="static const char *semver_major =";
 VS_MINOR="static const char *semver_minor =";
 VS_PATCH="static const char *semver_patch =";
 VS_TWEAK="static const char *semver_tweak =";
+VS_SEMVER="static const char *semver_version =";

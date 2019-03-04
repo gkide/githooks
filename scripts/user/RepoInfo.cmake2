@@ -19,3 +19,5 @@ set(MY_SEMVER_MAJOR "01")
 set(MY_SEMVER_MINOR "02")
 set(MY_SEMVER_PATCH "03")
 set(MY_SEMVER_TWEAK "beta.15")
+
+set(MY_SEMVER_SEMVER "1.2.3-beta.15")

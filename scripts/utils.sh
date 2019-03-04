@@ -560,12 +560,12 @@ function escREMC()
         hasMC=$(echo "${RSTR}" | grep "\\${REMC}")
     else
         if [ "$REMC" = " " ]; then
-            RE_space="\s+";
+            RE_space="white_space";
         elif [ "$REMC" = "	" ]; then # \t
-            RE_space="\s+";
+            RE_space="white_space";
         elif [ "$REMC" = "\t" ]; then # \t
             REMC="	"; # \t
-            RE_space="\s+";
+            RE_space="white_space";
         fi
 
         # *, (, ), ]
@@ -575,7 +575,7 @@ function escREMC()
     # output is like: gsub(/\*/,"\*",$1) { print $1; }
     AWK_ARGS="gsub(/""\\${REMC}/,"\""\\"${REMC}""\"",\$1) { print \$1; }";
     if [ "${RE_space}" != "" ]; then
-        AWK_ARGS="gsub(/""\\${REMC}/,"\""\\""s+"\"",\$1) { print \$1; }";
+        AWK_ARGS="gsub(/""\\${REMC}/,"\""\\""s*"\"",\$1) { print \$1; }";
     fi
 
     if [ "${hasMC}" != "" ]; then

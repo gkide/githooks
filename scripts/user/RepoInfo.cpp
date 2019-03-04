@@ -24,6 +24,7 @@ struct RepoInfo {
     static const std::string minor;
     static const std::string patch;
     static const std::string tweak;
+    static const std::string semver;
 };
 
 const std::string RepoInfo::hostName = "host name";
@@ -42,6 +43,7 @@ const std::string RepoInfo::major = "11";
 const std::string RepoInfo::minor = "22";
 const std::string RepoInfo::patch = "33";
 const std::string RepoInfo::tweak = "alpha";
+const std::string RepoInfo::semver = "11.22.33-alpha";
 
 int main(void)
 {
