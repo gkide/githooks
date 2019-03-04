@@ -5,6 +5,18 @@
 - REPOSITORY COMMITS ADHERE TO [CONVENTIONAL COMMITS](https://conventionalcommits.org).
 
 
+## 2019-03-05 02:17:10 +0800 Release [v0.1.1](https://github.com/gkide/repo-hooks/releases/tag/v0.1.1)
+
+[[☀](#<span id = "v_Fixed_201903050217100800"></span>)]
+comparing with [v0.1.0](https://github.com/gkide/repo-hooks/compare/v0.1.0...v0.1.1)
+
+<span id = "v_Fixed_201903050217100800"></span>
+### ☀ Fixed
+- **fix**: changelog release & unrelease ([726c645](https://github.com/gkide/repo-hooks/commit/726c645))
+- **fix**: full semver & testing ([ed63e97](https://github.com/gkide/repo-hooks/commit/ed63e97))
+- **fix**: repo user name & repo user email ([af4ed95](https://github.com/gkide/repo-hooks/commit/af4ed95))
+- **fix**: auto release tools & testing ([bba9fcc](https://github.com/gkide/repo-hooks/commit/bba9fcc))
+
 ## 2019-03-05 01:21:17 +0800 Release [v0.1.1](https://github.com/gkide/repo-hooks/releases/tag/v0.1.1)
 
 [[☀](#<span id = "v_Fixed_201903050121170800"></span>)]
