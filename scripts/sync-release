@@ -179,8 +179,8 @@ REPO_NAME=$(basename ${REPO_DIR});
 infoMsg "----------------------------------------------------------------";
 infoMsg "Just Enter with nothing will use the default [value]";
 infoMsg "----------------------------------------------------------------";
-infoMsg "$(keyMsg ${VCS}): Repo Dir: $(valMsg ${REPO_DIR})";
-infoMsg "$(keyMsg ${VCS}): Repo Cfg: $(keyMsg ${REPO_NAME})/$(valMsg ${USR_CONFIG#${REPO_DIR}/})";
+infoMsg "$(keyMsg ${VCS}): Repo: $(valMsg ${REPO_DIR})";
+infoMsg "$(keyMsg ${VCS}): Config: $(keyMsg ${REPO_NAME})/$(valMsg ${USR_CONFIG#${REPO_DIR}/})";
 infoMsg "$(keyMsg ${VCS}): SyncInfo: $(keyMsg ${REPO_NAME})/$(valMsg ${VS_VFILE#${REPO_DIR}/})";
 
 # Software Release Life Cycle
