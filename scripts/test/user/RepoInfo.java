@@ -22,8 +22,8 @@ public class RepoInfo {
     static public final long major = 11;
     static public final long minor = 22;
     static public final long patch = 33;
-    static public final String tweak = "alpha";
-    static public final String semver = "11.22.33-alpha";
+    static public final String tweak = "beta.20190425+0587014575";
+    static public final String semver = "11.22.33-beta.20190425+0587014575";
 
     public static void main(String[] args) {
         System.out.println(hostName);

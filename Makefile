@@ -4,6 +4,10 @@ MAKEFLAGS += --no-print-directory
 all:
 	@echo "Build done."
 
+PHONY += test
+test:
+	@scripts/test/run.sh
+
 PHONY += release
 release:
-	@scripts/release
+	@scripts/repo-hooks.sh

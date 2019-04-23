@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#################################################
+# This is the repo-hooks project release script #
+#################################################
+
 # Exit the script if any statement returns a non-true return value
 set -e
 # Show error if used undefined variable

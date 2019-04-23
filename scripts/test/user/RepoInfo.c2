@@ -20,6 +20,6 @@ static const char repo_url[] = "svn://addr/app/trunk/mta";
 static const char semver_major[] = "11";
 static const char semver_minor[] = "22";
 static const char semver_patch[] = "33";
-static const char semver_tweak[] = "beta.9";
+static const char semver_tweak[] = "dev.1";
 
-static const char semver_version[] = "11.22.33-beta.9";
+static const char semver_version[] = "11.22.33-dev.1";

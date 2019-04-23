@@ -19,7 +19,7 @@ static const char *repo_url = "svn://addr/app/trunk/mta";
 // semantic version
 static const char *semver_major = "0";
 static const char *semver_minor = "1";
-static const char *semver_patch = "1";
-static const char *semver_tweak = "rc.0";
+static const char *semver_patch = "0";
+static const char *semver_tweak = "dev";
 
-static const char *semver_version = "0.1.1-rc.0";
+static const char *semver_version = "0.1.0-dev";

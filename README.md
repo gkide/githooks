@@ -12,7 +12,7 @@ The repo hooks for local usage, make it consistent and simple.
 
 ## Recommend Usage
 
-### Step 1: NodeJS
+## Step 1: NodeJS
 
 [node_js_url]: https://nodejs.org/en/
 [node_js_npm_url]: https://www.npmjs.com/
@@ -39,7 +39,7 @@ The repo hooks for local usage, make it consistent and simple.
   * `$ cd path/to/repo && standard-release -i && cd .standard-release`
   * It maybe a better idea to add **.standard-release** to **.gitignore**
 
-### Step 2: Repo Hooks
+## Step 2: Repo Hooks
 
 - Repo Configurations
 
@@ -61,6 +61,44 @@ The repo hooks for local usage, make it consistent and simple.
     * `$ cd && git clone https://github.com/gkide/repo-hooks .repo-hooks`
     * `$ git config --global core.hooksPath ~/.repo-hooks`
     * `$ git config --global commit.template ~/.repo-hooks/GitCommitStyle`
+
+## About [script/sync-release](script/sync-release)
+
+To automatic the release steps, make it ease and simply, it does the following things:
+
+- check the repo is clean or not, if not **STOP**
+- get the latest git tag from the repo by [standard-release](standard_release_url)
+- get current version data from the user config version source
+- ask for each part of the release version, which is following [semver 2.0](https://semver.org/spec/v2.0.0.html)
+
+**NOTE**: `tweak` is special, which is consist of `pre-release` & `build-metadata`
+- `tweak` can be missing, just as semver 2.0
+- `pre-release` must be one value of commonly used values, which are:
+  * `dev`, `pre`, `nightly`, `alpha`, `beta`, `rc`, `lts`, `stable`, `release`, `eol`
+    * [npm-semver](https://docs.npmjs.com/misc/semver)
+    * [NodeJS Release](https://nodejs.org/en/about/releases)
+    * [NodeJS Release Schedule](https://github.com/nodejs/Release#readme
+    * [Software-Release-Life-Cycle](https://en.wikipedia.org/wiki/Software_release_life_cycle)
+  * can have extra numberic suffic spearated by `.`, such as:
+    * **20190423**(YYMMDD), **205432**(HH:MM:SS), **1**, **2**, etc.
+- `build-metadata` are the repo commit hash for tracing the build
+
+For example, the following versions are valid and confirm to [semver 2.0](https://semver.org/spec/v2.0.0.html)
+
+- `X.Y.Z` appended by `pre-release` text only without extra numberic info
+  * `0.1.0-dev`, `0.1.0-pre`, `0.1.0-nightly`, `0.1.0-alpha`, `0.1.0-beta`
+
+- `X.Y.Z` appended by `pre-release` text with numberic or date info
+  * `0.1.0-dev.2`, `0.1.0-pre.20190425`
+
+- `X.Y.Z` appended by `pre-release` text with numberic and `build-metadata` info
+  * `0.1.0-dev.2+0587014575`, `0.1.0-pre.20190425+0587014575`
+
+- `X.Y.Z` appended by `pre-release` date and `build-metadata` info
+  * `0.1.0-20190423+abc0145757`
+
+- `X.Y.Z` appended by noting
+  * `0.1.0`
 
 # About Git Hooks
 

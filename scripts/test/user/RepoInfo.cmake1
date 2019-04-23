@@ -11,13 +11,13 @@ set(MY_BUILD_TIME "2018-01-30 10:20:30 +0845")
 set(MY_MODIFY_TIME "2019-01-30 20:50:59 +8123")
 
 # remote repo url
-set(MY_REPO_HASH 615)
+set(MY_REPO_HASH "615")
 set(MY_REPO_URL "svn://addr/app/trunk/mta")
 
 # semantic version
 set(MY_SEMVER_MAJOR "01")
 set(MY_SEMVER_MINOR "02")
 set(MY_SEMVER_PATCH "03")
-set(MY_SEMVER_TWEAK "beta.15")
+set(MY_SEMVER_TWEAK "dev.333")
 
-set(MY_SEMVER_SEMVER "1.2.3-beta.15")
+set(MY_SEMVER_SEMVER "01.02.03-dev.333")

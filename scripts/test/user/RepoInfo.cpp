@@ -20,9 +20,9 @@ struct RepoInfo {
     static const std::string repoUrl; // remote repo url
 
     // semantic version
-    static const long major;
-    static const long minor;
-    static const long patch;
+    static const std::string major;
+    static const std::string minor;
+    static const std::string patch;
     static const std::string tweak;
     static const std::string semver;
 };
@@ -39,11 +39,11 @@ const std::string RepoInfo::modifyTime = "2019-01-30 20:50:59 +8123";
 const std::string RepoInfo::repoHash = "615";
 const std::string RepoInfo::repoUrl = "svn://addr/app/trunk/mta";
 
-const long RepoInfo::major = 11;
-const long RepoInfo::minor = 22;
-const long RepoInfo::patch = 33;
-const std::string RepoInfo::tweak = "alpha";
-const std::string RepoInfo::semver = "11.22.33-alpha";
+const std::string RepoInfo::major = "11";
+const std::string RepoInfo::minor = "22";
+const std::string RepoInfo::patch = "33";
+const std::string RepoInfo::tweak = "rc.20190423";
+const std::string RepoInfo::semver = "11.22.33-rc.20190423";
 
 int main(void)
 {

@@ -1,25 +1,27 @@
 #!/usr/bin/env bash
 #
-# For testing sync-repo-info & release only
+# For testing 'sync-repo-info' & 'sync-release'
 
-THIS_DIR=${PWD}
+REPO_DIR=$(git rev-parse --show-toplevel)
+SCRIPTS_DIR=${REPO_DIR}/scripts
+TEST_DIR=${REPO_DIR}/scripts/test
 
 # Testing temp repo directory
-TMEM_DIR=${THIS_DIR}/temp
-# Testing user config directory
-USER_DIR=${THIS_DIR}/user
+T_TEMP_DIR=${TEST_DIR}/temp
+# User config directory for testing
+T_USER_DIR=${TEST_DIR}/user
 
-GIT_REPO=${TMEM_DIR}/GitRepo
-SVN_REPO=${TMEM_DIR}/SvnRepo
+T_GIT_REPO=${T_TEMP_DIR}/GitRepo
+T_SVN_REPO=${T_TEMP_DIR}/SvnRepo
 
 # The sync repo info scripts to testing
-SyncRelease=${THIS_DIR}/sync-release
-SyncRepoInfo=${THIS_DIR}/sync-repo-info
+SyncRelease=${SCRIPTS_DIR}/sync-release
+SyncRepoInfo=${SCRIPTS_DIR}/sync-repo-info
 
 # Import normal shell function-util
 # - IS_DEBUG_MODE=true;
 # - IS_VERBOSE_MODE=true;
-source ${THIS_DIR}/utils.sh;
+source ${SCRIPTS_DIR}/utils.sh;
 IS_DEBUG_MODE=false;
 
 function testFailure()
@@ -49,11 +51,11 @@ function isTestOk()
 # Init git repo for testing
 function initGitRepo()
 {
-    mkdir ${GIT_REPO}
-    cd ${GIT_REPO}
+    mkdir ${T_GIT_REPO}
+    cd ${T_GIT_REPO}
     git init 2>&1 > /dev/null
-    cp ${USER_DIR}/RepoInfo.* ${GIT_REPO}/
-    cp ${USER_DIR}/git/RepoInfo.* ${GIT_REPO}/
+    cp ${T_USER_DIR}/RepoInfo.* ${T_GIT_REPO}/
+    cp ${T_USER_DIR}/git/RepoInfo.* ${T_GIT_REPO}/
     git remote add orgin https://github.com/GitRepo.git
     git add .
     git commit -m 'chore: init' > /dev/null
@@ -64,14 +66,14 @@ function initGitRepo()
 function initSvnRepo()
 {
     # The SVN meta-repo
-    SvnMeta=${TMEM_DIR}/SvnMeta
+    SvnMeta=${T_TEMP_DIR}/SvnMeta
     mkdir ${SvnMeta}
     cd ${SvnMeta}
 
     # Creat svn server repo
     svnadmin create SvnRepo
     # For anonymous commit
-    cp -f ${USER_DIR}/svn/svnserve.conf SvnRepo/conf/svnserve.conf
+    cp -f ${T_USER_DIR}/svn/svnserve.conf SvnRepo/conf/svnserve.conf
 
     # Start SVN server service
     svnserve -d -r $PWD
@@ -80,7 +82,7 @@ function initSvnRepo()
     # netstat -nltp
     # To checkout SVN repo
 
-    cd ${TMEM_DIR}
+    cd ${T_TEMP_DIR}
     svn checkout svn://localhost/SvnRepo > /dev/null
     cd SvnRepo
     mkdir -p subdir;
@@ -90,13 +92,13 @@ function initSvnRepo()
     svn up > /dev/null;
 
     # Copy the user source files
-    cp ${USER_DIR}/RepoInfo.* ${SVN_REPO}/
-    cp ${USER_DIR}/svn/RepoInfo.* ${SVN_REPO}/
+    cp ${T_USER_DIR}/RepoInfo.* ${T_SVN_REPO}/
+    cp ${T_USER_DIR}/svn/RepoInfo.* ${T_SVN_REPO}/
 }
 
 function syncGitRepoInfo()
 {
-    cd ${GIT_REPO}
+    cd ${T_GIT_REPO}
 
     TYPE=$1
     QUIET=$2
@@ -127,24 +129,57 @@ function syncGitRepoInfo()
     cp -f RepoInfo.$TYPE.sh .sync-repo-info.sh;
     QUIET="${QUIET} INTERACTIVE=false";
 
-    ${SyncRelease} $QUIET;
+    ${SyncRelease} $QUIET; # auto semver: v0.0.1
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
     isTestOk "${isOk}" "Checking GIT repo(R): REPO/.sync-repo-info.sh";
 
+    semver_tag="v0.0.1-dev";
+    git checkout .
+    git tag ${semver_tag}; # auto semver: v0.0.1-dev.0
     ${SyncRelease} $QUIET CONFIG=RepoInfo.$TYPE.sh;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
     isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
 
+    git tag -d ${semver_tag}
+    semver_tag="v0.0.2-pre.110";
+    git checkout .
+    git tag ${semver_tag}; # auto semver: v0.0.2-pre.111
+    ${SyncRelease} $QUIET CONFIG=RepoInfo.$TYPE.sh;
+    if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
+
+    git tag -d ${semver_tag}
+    semver_tag="v0.0.3-rc.20190421";
+    git checkout .
+    git tag ${semver_tag}; # auto semver: v0.0.3-rc.XXXXXXXX
+    ${SyncRelease} $QUIET CONFIG=RepoInfo.$TYPE.sh;
+    if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
+
+    git tag -d ${semver_tag}
+    semver_tag="v0.0.4-rc.20190422+abcdef1234";
+    git checkout .
+    git tag ${semver_tag}; # auto semver: v0.0.4-rc.XXXXXXXX
+    ${SyncRelease} $QUIET CONFIG=RepoInfo.$TYPE.sh;
+    if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
+
+    git checkout .
+    git tag -d ${semver_tag}
+    semver_tag="v0.0.5-rc.20190423+abcdef1234";
+    git tag ${semver_tag}; # auto semver: v0.0.5-rc.XXXXXXXX
     mkdir -p subdir; cd subdir;
     cp -f ../.sync-repo-info.sh sync-repo-info.sh
     ${SyncRelease} $QUIET CONFIG=sync-repo-info.sh;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
     isTestOk "${isOk}" "Checking GIT repo(R): REPO/subdir/sync-repo-info.sh";
+
+    git tag -d ${semver_tag}
 }
 
 function syncSvnRepoInfo()
 {
-    cd ${SVN_REPO}
+    cd ${T_SVN_REPO}
 
     TYPE=$1
     QUIET=$2
@@ -174,7 +209,7 @@ function syncSvnRepoInfo()
 function syncForGitRepo()
 {
     echo '----------------------------------------'
-    syncGitRepoInfo h TESTING=true
+    syncGitRepoInfo h TESTING=true;
     echo '----------------------------------------'
     syncGitRepoInfo c1 TESTING=true
     echo '----------------------------------------'
@@ -210,20 +245,20 @@ function syncForSvnRepo()
 function main()
 {
     # Init testing repo
-    mkdir ${TMEM_DIR}
+    mkdir ${T_TEMP_DIR}
 
     initGitRepo
     syncForGitRepo
 
-    initSvnRepo
-    syncForSvnRepo
+    #initSvnRepo
+    #syncForSvnRepo
 
     # clean up testing repo
-    rm -rf ${TMEM_DIR}
+    rm -rf ${T_TEMP_DIR}
 
     # Kill the svn service
-    SVNPID=$(ps -ef | grep svnserve | head -n 1 | awk '{ print $2; }')
-    kill ${SVNPID}
+    #SVNPID=$(ps -ef | grep svnserve | head -n 1 | awk '{ print $2; }')
+    #kill ${SVNPID}
 }
 
 main
