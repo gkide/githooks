@@ -3,30 +3,31 @@
 REPO_HOOKS_VERSION="v0.1.1";
 # https://github.com/gkide/repo-hooks
 
-# Semantic Version
-# https://semver.org/
-# Software Release Life Cycle
-# https://en.wikipedia.org/wiki/Software_release_life_cycle
+# Exit the script if any statement returns a non-true return value
+set -e
+# Show error if used undefined variable
+set -u
+# Pipe fail if any one of the pipe command failed
+set -o pipefail
+
+# Software Release Life Cycle & Candidates
 #
-################################################################
-#                       +----------------MUI--------------+    #
-#  +-ADT-+              |  +--FIX--+                      |    #
-#  |     |              |  |       |                      |    #
-#  v     |              v  v       |                      |    #
-# pre-* ===> alpha ===> beta ===> rc ===> [release] ===> eol   #
-#  ^         |  ^       |  ^       ^          |                #
-#  |         |  |       | MUI     FIX         |                #
-#  +---MUI---+  +--MUI--+  |       |          |                #
-#                          +-------+----------+                #
-#                                                              #
-# - ADT: Analysis, Design, Testing, ...                        #
-# - MUI: Modify User Interfacce, feature changing, fix, ...    #
-# - FIX: Bug fix, performance improvement, compatibility, ...  #
-################################################################
+# - Semantic Version
+#   https://semver.org/
+# - Software Release Life Cycle
+#   https://en.wikipedia.org/wiki/Software_release_life_cycle
+# - Also see
+#   1. https://nodejs.org/en/about/releases/
+#   2. https://github.com/nodejs/Release#readme
+#######################################################################
+# dev/pre/nightly => alpha => beta => rc => lts/stable/release => lts #
+#######################################################################
 #
-# - pre-*
+# - dev/pre/nightly
 #   Refers to all activities performed before formal testing, like:
 #   requirements analysis, software design, and related inter-testing
+#   Code from the default branch built every 24-hours when there are changes.
+#   Those type of build should be used with caution!
 #
 # - alpha
 #   The first phase to begin software testing, normally using of
@@ -49,15 +50,38 @@ REPO_HOOKS_VERSION="v0.1.1";
 #   tested through one or more beta cycles, no entirely new features will be
 #   added. There can still have bug fix, change the documentation and testings.
 #
+# - lts/stable/release
+#   The final normal release version
+#
 # - eol
 #   No longer supported, the release reached the end-of-life.
+SRLC_REG="((-[a-z0-9_.-]+)*(+[0-9a-f]+)*)";
+SRLC_CAN="dev pre nightly alpha beta rc lts stable release eol";
 
-# Exit the script if any statement returns a non-true return value
-set -e
-# Show error if used undefined variable
-set -u
-# Pipe fail if any one of the pipe command failed
-set -o pipefail
+SRLC_HELP="";
+SRLC_FMTA="";
+SRLC_FMTB="";
+SRLC_FMTC="";
+for item in ${SRLC_CAN}; do
+    [ -n "${SRLC_HELP}" ] && SRLC_HELP="${SRLC_HELP}, ";
+    SRLC_HELP="${SRLC_HELP}$(valMsg ${item})";
+
+    [ -n "${SRLC_FMTA}" ] && SRLC_FMTA="${SRLC_FMTA}    ";
+    [ -n "${SRLC_FMTB}" ] && SRLC_FMTB="${SRLC_FMTB}    ";
+    [ -n "${SRLC_FMTC}" ] && SRLC_FMTC="${SRLC_FMTC}    ";
+    if [ "${item}" != "eol" ]; then
+        SRLC_FMTA="${SRLC_FMTA}${item}.123";
+        SRLC_FMTB="${SRLC_FMTB}${item}-foo";
+        SRLC_FMTC="${SRLC_FMTC}${item}-X.1";
+    fi
+done
+
+# The TWEAK example usage
+SRLC_HELP="${SRLC_HELP}
+The TWEAK format as following, like:
+    ${SRLC_FMTA}
+    ${SRLC_FMTB}
+    ${SRLC_FMTC}";
 
 # Current directory of full path with symbolic link resolved
 THIS_DIR="$(realpath ${0%/*})";
@@ -183,35 +207,6 @@ infoMsg "$(keyMsg ${VCS}): Repo: $(valMsg ${REPO_DIR})";
 infoMsg "$(keyMsg ${VCS}): Config: $(keyMsg ${REPO_NAME})/$(valMsg ${USR_CONFIG#${REPO_DIR}/})";
 infoMsg "$(keyMsg ${VCS}): SyncInfo: $(keyMsg ${REPO_NAME})/$(valMsg ${VS_VFILE#${REPO_DIR}/})";
 
-# Software Release Life Cycle
-SRLC_REG="(([a-z]+)(-[a-z]+)*)(\.([0-9]+(\.[0-9]+)*))*";
-SRLC_CAN="pre alpha beta rc eol"; # CAN: Candidates
-
-SRLC_HELP="";
-SRLC_FMTA="";
-SRLC_FMTB="";
-SRLC_FMTC="";
-for item in ${SRLC_CAN}; do
-    [ -n "${SRLC_HELP}" ] && SRLC_HELP="${SRLC_HELP}, ";
-    SRLC_HELP="${SRLC_HELP}$(valMsg ${item})";
-
-    [ -n "${SRLC_FMTA}" ] && SRLC_FMTA="${SRLC_FMTA}    ";
-    [ -n "${SRLC_FMTB}" ] && SRLC_FMTB="${SRLC_FMTB}    ";
-    [ -n "${SRLC_FMTC}" ] && SRLC_FMTC="${SRLC_FMTC}    ";
-    if [ "${item}" != "eol" ]; then
-        SRLC_FMTA="${SRLC_FMTA}${item}.123";
-        SRLC_FMTB="${SRLC_FMTB}${item}-foo";
-        SRLC_FMTC="${SRLC_FMTC}${item}-X.1";
-    fi
-done
-
-# The TWEAK example usage
-SRLC_HELP="${SRLC_HELP}
-The TWEAK format as following, like:
-    ${SRLC_FMTA}
-    ${SRLC_FMTB}
-    ${SRLC_FMTC}";
-
 function escapeRegExpMetaChar()
 {
     STR="$1";
@@ -239,7 +234,7 @@ function escapeRegExpMetaChar()
 
 isDefined="$(echo ${VS_MAJOR-NotDefine})"
 if [ "${isDefined}" = "NotDefine" ]; then
-    _VS_MAJOR_="XX_YY_ZZ_NOT_USED_MAJOR";
+    _VS_MAJOR_="DO_NOT_USED_MAJOR";
 else
     _VS_MAJOR_=$(escapeRegExpMetaChar "${VS_MAJOR}");
     VS_MAJOR=$(escREMC '*' "${VS_MAJOR}");
@@ -250,7 +245,7 @@ fi
 
 isDefined="$(echo ${VS_MINOR-NotDefine})"
 if [ "${isDefined}" = "NotDefine" ]; then
-    _VS_MINOR_="XX_YY_ZZ_NOT_USED_MINOR";
+    _VS_MINOR_="DO_NOT_USED_MINOR";
 else
     _VS_MINOR_=$(escapeRegExpMetaChar "${VS_MINOR}");
     VS_MINOR=$(escREMC '*' "${VS_MINOR}");
@@ -262,7 +257,7 @@ fi
 
 isDefined="$(echo ${VS_PATCH-NotDefine})"
 if [ "${isDefined}" = "NotDefine" ]; then
-    _VS_PATCH_="XX_YY_ZZ_NOT_USED_PATCH";
+    _VS_PATCH_="DO_NOT_USED_PATCH";
 else
     _VS_PATCH_=$(escapeRegExpMetaChar "${VS_PATCH}");
     VS_PATCH=$(escREMC '*' "${VS_PATCH}");
@@ -273,7 +268,7 @@ fi
 
 isDefined="$(echo ${VS_TWEAK-NotDefine})"
 if [ "${isDefined}" = "NotDefine" ]; then
-    _VS_TWEAK_="XX_YY_ZZ_NOT_USED_TWEAK";
+    _VS_TWEAK_="DO_NOT_USED_TWEAK";
 else
     _VS_TWEAK_=$(escapeRegExpMetaChar "${VS_TWEAK}");
     VS_TWEAK=$(escREMC '*' "${VS_TWEAK}");
@@ -284,7 +279,7 @@ fi
 
 isDefined="$(echo ${VS_SEMVER-NotDefine})"
 if [ "${isDefined}" = "NotDefine" ]; then
-    _VS_SEMVER_="XX_YY_ZZ_NOT_USED_SEMVER";
+    _VS_SEMVER_="DO_NOT_USED_SEMVER";
 else
     _VS_SEMVER_=$(escapeRegExpMetaChar "${VS_SEMVER}");
 
@@ -309,7 +304,7 @@ debugMsg "$(keyMsg RegExp Tweak): [$(valMsg ${REGEXP_TWEAK})]";
 debugMsg "$(keyMsg RegExp SemVer): [$(valMsg ${REGEXP_SEMVER})]";
 
 # Old Semver
-if [ "$_VS_SEMVER_" != "XX_YY_ZZ_NOT_USED_SEMVER" ]; then
+if [ "$_VS_SEMVER_" != "DO_NOT_USED_SEMVER" ]; then
     VERSION_SEMVER=$(grep "${VS_SEMVER}" ${VS_VFILE} \
         | ${_sed} "s/${REGEXP_SEMVER}/\2/");
     debugMsg "$(keyMsg SemVer): [$(valMsg ${VERSION_SEMVER})]";
