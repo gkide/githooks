@@ -357,6 +357,7 @@ s_minor="${_minor_}"
 s_patch="${_patch_}"
 s_tweak="${_tweak_}"
 
+PREV_TWEAK="";
 PREV_TWEAK_TXT="";
 PREV_TWEAK_NUM="";
 PREV_TWEAK_SHA="";
@@ -377,16 +378,20 @@ PREV_TWEAK_SHA="";
     fi
 
     PREV_TWEAK="$(valMsg ${PREV_TWEAK_TXT})";
-    if [ -n "${PREV_TWEAK}" ]; then
-        PREV_TWEAK="${PREV_TWEAK}.$(valMsg ${PREV_TWEAK_NUM})";
-    else
-        PREV_TWEAK="$(valMsg ${PREV_TWEAK_NUM})";
+    if [ -n "${PREV_TWEAK_NUM}" ]; then
+        if [ -n "${PREV_TWEAK}" ]; then
+            PREV_TWEAK="${PREV_TWEAK}.$(valMsg ${PREV_TWEAK_NUM})";
+        else
+            PREV_TWEAK="$(valMsg ${PREV_TWEAK_NUM})";
+        fi
     fi
 
-    if [ -n "${PREV_TWEAK}" ]; then
-        PREV_TWEAK="${PREV_TWEAK}+$(valMsg ${PREV_TWEAK_SHA})";
-    else
-        PREV_TWEAK="$(valMsg ${PREV_TWEAK_SHA})";
+    if [ -n "${PREV_TWEAK_SHA}" ]; then
+        if [ -n "${PREV_TWEAK}" ]; then
+            PREV_TWEAK="${PREV_TWEAK}+$(valMsg ${PREV_TWEAK_SHA})";
+        else
+            PREV_TWEAK="$(valMsg ${PREV_TWEAK_SHA})";
+        fi
     fi
 
     #debugMsg "$(keyMsg Tweak old text): [$(valMsg ${PREV_TWEAK_TXT})]";

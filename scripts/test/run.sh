@@ -255,15 +255,15 @@ function main()
     initGitRepo
     syncForGitRepo $1
 
-    #initSvnRepo
-    #syncForSvnRepo
+    initSvnRepo
+    syncForSvnRepo
 
     # clean up testing repo
     rm -rf ${T_TEMP_DIR}
 
     # Kill the svn service
-    #SVNPID=$(ps -ef | grep svnserve | head -n 1 | awk '{ print $2; }')
-    #kill ${SVNPID}
+    SVNPID=$(ps -ef | grep svnserve | head -n 1 | awk '{ print $2; }')
+    kill ${SVNPID}
 }
 
 main $1
