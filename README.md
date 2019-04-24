@@ -66,7 +66,7 @@ The repo hooks for local usage, make it consistent and simple.
 
 To automatic the release steps, make it ease and simply, it does the following things:
 
-- check the repo is clean or not, if not **STOP**
+- check the repo is NOT clean, then it will do `git stash` & `git pop`
 - get the latest git tag from the repo by [standard-release](standard_release_url)
 - get current version data from the user config version source
 - ask for each part of the release version, which is following [semver 2.0](https://semver.org/spec/v2.0.0.html)
