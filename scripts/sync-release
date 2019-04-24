@@ -55,7 +55,7 @@ set -o pipefail
 #
 # - eol
 #   No longer supported, the release reached the end-of-life.
-SRLC_REG="([a-z]+)*(\.([0-9]+))*(\+([0-9a-f]+))*";
+SRLC_REG="([a-z]+)*(\.*([0-9]+))*(\+*([0-9a-f]+))*";
 SRLC_CAN="dev pre nightly alpha beta rc stable release lts eol";
 
 # Current directory of full path with symbolic link resolved
@@ -118,8 +118,8 @@ for item in $*; do
     fi
 
     if [ "TESTING" = "$KEY" ]; then
-        #__SKIP_ALL_MSG=true;
-        #IS_TESTING=true;
+        __SKIP_ALL_MSG=true;
+        IS_TESTING=true;
         continue;
     fi
 done
@@ -129,7 +129,7 @@ SKIP_ALL_MSG=$__SKIP_ALL_MSG;
 
 # Semantic version config not set, use the default of current working directory
 if [ "${USR_CONFIG}" = "" ]; then
-    USR_CONFIG=.sync-repo-info.sh
+    USR_CONFIG=.sync-release.sh
 fi
 
 if [ ! -f "${USR_CONFIG}" ]; then
@@ -232,7 +232,7 @@ else
     VS_MAJOR=$(escREMC '*' "${VS_MAJOR}");
     VS_MAJOR=$(escREMC '[' "${VS_MAJOR}");
     VS_MAJOR=$(escREMC ']' "${VS_MAJOR}");
-    debugMsg "$(keyMsg Key Major): [$(valMsg ${VS_MAJOR})]";
+    #debugMsg "$(keyMsg Key Major): [$(valMsg ${VS_MAJOR})]";
 fi
 
 isDefined="$(echo ${VS_MINOR-NotDefine})"
@@ -243,7 +243,7 @@ else
     VS_MINOR=$(escREMC '*' "${VS_MINOR}");
     VS_MINOR=$(escREMC '[' "${VS_MINOR}");
     VS_MINOR=$(escREMC ']' "${VS_MINOR}");
-    debugMsg "$(keyMsg Key Minor): [$(valMsg ${VS_MINOR})]";
+    #debugMsg "$(keyMsg Key Minor): [$(valMsg ${VS_MINOR})]";
 
 fi
 
@@ -255,7 +255,7 @@ else
     VS_PATCH=$(escREMC '*' "${VS_PATCH}");
     VS_PATCH=$(escREMC '[' "${VS_PATCH}");
     VS_PATCH=$(escREMC ']' "${VS_PATCH}");
-    debugMsg "$(keyMsg Key Patch): [$(valMsg ${VS_PATCH})]";
+    #debugMsg "$(keyMsg Key Patch): [$(valMsg ${VS_PATCH})]";
 fi
 
 isDefined="$(echo ${VS_TWEAK-NotDefine})"
@@ -266,7 +266,7 @@ else
     VS_TWEAK=$(escREMC '*' "${VS_TWEAK}");
     VS_TWEAK=$(escREMC '[' "${VS_TWEAK}");
     VS_TWEAK=$(escREMC ']' "${VS_TWEAK}");
-    debugMsg "$(keyMsg Key Tweak): [$(valMsg ${VS_TWEAK})]";
+    #debugMsg "$(keyMsg Key Tweak): [$(valMsg ${VS_TWEAK})]";
 fi
 
 isDefined="$(echo ${VS_SEMVER-NotDefine})"
@@ -289,17 +289,17 @@ REGEXP_PATCH="^(${_VS_PATCH_}\s*\\\"*'*)([0-9]+)('*\\\"*\s*.*)$";
 REGEXP_TWEAK="^(${_VS_TWEAK_}\s*\\\"*'*)([a-z0-9\.\+]+)*('*\\\"*\s*.*)$";
 REGEXP_SEMVER="^(${_VS_SEMVER_}\s*\\\"*'*)([a-z0-9\.\+-]+)('*\\\"*\s*.*)$";
 
-debugMsg "$(keyMsg RegExp Major): [$(valMsg ${REGEXP_MAJOR})]";
-debugMsg "$(keyMsg RegExp Minor): [$(valMsg ${REGEXP_MINOR})]";
-debugMsg "$(keyMsg RegExp Patch): [$(valMsg ${REGEXP_PATCH})]";
-debugMsg "$(keyMsg RegExp Tweak): [$(valMsg ${REGEXP_TWEAK})]";
-debugMsg "$(keyMsg RegExp SemVer): [$(valMsg ${REGEXP_SEMVER})]";
+#debugMsg "$(keyMsg RegExp Major): [$(valMsg ${REGEXP_MAJOR})]";
+#debugMsg "$(keyMsg RegExp Minor): [$(valMsg ${REGEXP_MINOR})]";
+#debugMsg "$(keyMsg RegExp Patch): [$(valMsg ${REGEXP_PATCH})]";
+#debugMsg "$(keyMsg RegExp Tweak): [$(valMsg ${REGEXP_TWEAK})]";
+#debugMsg "$(keyMsg RegExp SemVer): [$(valMsg ${REGEXP_SEMVER})]";
 
-# Old Semver
+# Semver From The Source Code
 if [ "$_VS_SEMVER_" != "DO_NOT_USED_SEMVER" ]; then
     VERSION_SEMVER=$(grep "${VS_SEMVER}" ${VS_VFILE} \
         | ${_sed} "s/${REGEXP_SEMVER}/\2/");
-    debugMsg "$(keyMsg SemVer): [$(valMsg ${VERSION_SEMVER})]";
+    #debugMsg "$(keyMsg SemVer): [$(valMsg ${VERSION_SEMVER})]";
 
     VERSION_MAJOR=$(echo "${VERSION_SEMVER}" \
         | ${_sed} "s/([A-Za-z]*)([0-9]+)\.([0-9]+)\.([0-9]+)([-+]([a-z0-9\.\+]+))*/\2/");
@@ -328,7 +328,7 @@ fi
 PREV_MAJOR=${VERSION_MAJOR}
 PREV_MINOR=${VERSION_MINOR}
 PREV_PATCH=${VERSION_PATCH}
-PREV_TWEAK=${VERSION_TWEAK}
+PREV_TWEAK_NC=${VERSION_TWEAK}
 
 _major_="$(valMsg ${VERSION_MAJOR})";
 _minor_="$(valMsg ${VERSION_MINOR})";
@@ -339,21 +339,23 @@ _tweak_="$(valMsg ${VERSION_TWEAK})";
 if ${isGitRepo}; then
     CURRENT_BRANCH=$(git status | head -n 1 | awk '{print $3}');
     infoMsg "----------------------------------------------------------------";
-    infoMsgL "Release branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
+    infoMsgL "Release Branch $(valMsg ${CURRENT_BRANCH}) (y/n) [y]: ";
     usrInput="Y"; # default value for none interactive mode
     ${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
+    ! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
+
     [ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
 
     if ! isYes "${usrInput}"; then
-        errMsg "Release stop.";
+        errMsg "Release Stop.";
     fi
 fi
 
-o_major="${_major_}"
-o_minor="${_minor_}"
-o_patch="${_patch_}"
-o_tweak="${_tweak_}"
+s_major="${_major_}"
+s_minor="${_minor_}"
+s_patch="${_patch_}"
+s_tweak="${_tweak_}"
 
 PREV_TWEAK_TXT="";
 PREV_TWEAK_NUM="";
@@ -363,33 +365,44 @@ PREV_TWEAK_SHA="";
     PREV_TWEAK_NUM=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\3/");
     PREV_TWEAK_SHA=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\5/");
 
-    IS_TXT=$(echo "${PREV_TWEAK_TXT}" | ${_sed} -n "/^[a-z]*$/p");
-    IS_NUM=$(echo "${PREV_TWEAK_NUM}" | ${_sed} -n "/^[0-9]*$/p");
-    IS_SHA=$(echo "${PREV_TWEAK_SHA}" | ${_sed} -n "/^[a-f0-9]*$/p");
+    PREV_TWEAK_TXT=$(echo "${PREV_TWEAK_TXT}" | ${_sed} -n "/^[a-z]*$/p");
+    PREV_TWEAK_NUM=$(echo "${PREV_TWEAK_NUM}" | ${_sed} -n "/^[0-9]*$/p");
+    PREV_TWEAK_SHA=$(echo "${PREV_TWEAK_SHA}" | ${_sed} -n "/^[a-f0-9]*$/p");
 
-    if [ -z "${IS_TXT}" -a -z "${IS_NUM}" -a -z "${IS_SHA}" ]; then
+    if [ -z "${PREV_TWEAK_TXT}" -a -z "${PREV_TWEAK_NUM}" -a -z "${PREV_TWEAK_SHA}" ]; then
         # get relative path to REPO
-        vf_name=${VS_VFILE#*${REPO_DIR}/}
-        errMsg "$(keyMsg ${vf_name}) TWEAK shoule be one of:\n
+        repo_fname=${VS_VFILE#*${REPO_DIR}/}
+        errMsg "$(keyMsg ${repo_fname}) TWEAK shoule be one of:\n
     ${SRLC_HELP}";
     fi
 
-    [ -z "${IS_TXT}" ] && PREV_TWEAK_TXT="";
-    [ -z "${IS_NUM}" ] && PREV_TWEAK_NUM="";
-    [ -z "${IS_SHA}" ] && PREV_TWEAK_SHA="";
-    debugMsg "$(keyMsg Tweak old text): [$(valMsg ${PREV_TWEAK_TXT})]";
-    debugMsg "$(keyMsg Tweak old nums): [$(valMsg ${PREV_TWEAK_NUM})]";
-    debugMsg "$(keyMsg Tweak old hash): [$(valMsg ${PREV_TWEAK_SHA})]";
+    PREV_TWEAK="$(valMsg ${PREV_TWEAK_TXT})";
+    if [ -n "${PREV_TWEAK}" ]; then
+        PREV_TWEAK="${PREV_TWEAK}.$(valMsg ${PREV_TWEAK_NUM})";
+    else
+        PREV_TWEAK="$(valMsg ${PREV_TWEAK_NUM})";
+    fi
+
+    if [ -n "${PREV_TWEAK}" ]; then
+        PREV_TWEAK="${PREV_TWEAK}+$(valMsg ${PREV_TWEAK_SHA})";
+    else
+        PREV_TWEAK="$(valMsg ${PREV_TWEAK_SHA})";
+    fi
+
+    #debugMsg "$(keyMsg Tweak old text): [$(valMsg ${PREV_TWEAK_TXT})]";
+    #debugMsg "$(keyMsg Tweak old nums): [$(valMsg ${PREV_TWEAK_NUM})]";
+    #debugMsg "$(keyMsg Tweak old hash): [$(valMsg ${PREV_TWEAK_SHA})]";
 }
 
 # Update CHANGELOG.md & get next auto semver
 # SEMVER_TAG is like '1.2.3' or '1.2.3-1'
 CHANGELOG="CHANGELOG.md";
 CHANGELOG_UPDATE=false;
-infoMsgL "Update changelog ($(keyMsg SKIP)) [$(valMsg ${CHANGELOG})]: ";
+infoMsgL "Changelog Update ($(keyMsg SKIP)) [$(valMsg ${CHANGELOG})]: ";
 usrInput="CHANGELOG.md"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="CHANGELOG.md"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 
 # Skip changelog update
 if [ "${usrInput}" != "SKIP" ]; then
@@ -431,8 +444,8 @@ SEMVER_VAL=$(echo "${SEMVER_TAG}" \
 
 AUTO_MMP=$(echo "${SEMVER_VAL}" | awk -F ';' '{ print $1; }');
 AUTO_PREREL=$(echo "${SEMVER_VAL}" | awk -F ';' '{ print $2; }');
-debugMsg "$(keyMsg Auto major.minor.patch): [$(valMsg ${AUTO_MMP})]";
-debugMsg "$(keyMsg Auto pre-release-tweak): [$(valMsg ${AUTO_PREREL})]";
+#debugMsg "$(keyMsg Auto major.minor.patch): [$(valMsg ${AUTO_MMP})]";
+#debugMsg "$(keyMsg Auto pre-release-tweak): [$(valMsg ${AUTO_PREREL})]";
 
 AUTO_MAJOR=$(echo "${AUTO_MMP}" | awk -F '.' '{ print $1; }');
 AUTO_MINOR=$(echo "${AUTO_MMP}" | awk -F '.' '{ print $2; }');
@@ -445,18 +458,16 @@ if [ -n "${AUTO_PREREL}" ]; then
     AUTO_TWEAK_TXT=$(echo "${AUTO_PREREL}" | ${_sed} "s/^${SRLC_REG}$/\1/");
     AUTO_TWEAK_NUM=$(echo "${AUTO_PREREL}" | ${_sed} "s/^${SRLC_REG}$/\3/");
 
-    IS_TXT=$(echo "${AUTO_TWEAK_TXT}" | ${_sed} -n "/^[a-z]*$/p");
-    IS_NUM=$(echo "${AUTO_TWEAK_NUM}" | ${_sed} -n "/^[0-9]*$/p");
+    AUTO_TWEAK_TXT=$(echo "${AUTO_TWEAK_TXT}" | ${_sed} -n "/^[a-z]*$/p");
+    AUTO_TWEAK_NUM=$(echo "${AUTO_TWEAK_NUM}" | ${_sed} -n "/^[0-9]*$/p");
 
-    if [ -z "${IS_TXT}" -a -z "${IS_NUM}" ]; then
+    if [ -z "${AUTO_TWEAK_TXT}" -a -z "${AUTO_TWEAK_NUM}" ]; then
         errMsg "Auto semver $(keyMsg TWEAK) shoule be one of:\n
     ${SRLC_HELP}";
     fi
 
-    [ -z "${IS_TXT}" ] && AUTO_TWEAK_TXT="";
-    [ -z "${IS_NUM}" ] && AUTO_TWEAK_NUM="";
-    debugMsg "$(keyMsg Tweak auto text): [$(valMsg ${AUTO_TWEAK_TXT})]";
-    debugMsg "$(keyMsg Tweak auto nums): [$(valMsg ${AUTO_TWEAK_NUM})]";
+    #debugMsg "$(keyMsg Tweak auto text): [$(valMsg ${AUTO_TWEAK_TXT})]";
+    #debugMsg "$(keyMsg Tweak auto nums): [$(valMsg ${AUTO_TWEAK_NUM})]";
 fi
 
 _major_="$(valMsg ${AUTO_MAJOR})";
@@ -474,56 +485,75 @@ _patch_="$(valMsg ${AUTO_PATCH})";
 is_sha_tweak_only=true;
 _tweak_="$(valMsg ${AUTO_PREREL})";
 if [ "${PREV_TWEAK}" != "${AUTO_PREREL}" ]; then
-    _tweak_=""; # clean it
+    _tweak_="";
+    AUTO_PREREL=""; # clean it
+    SEPC=""
     if [ -n "${AUTO_TWEAK_TXT}" ]; then
         is_sha_tweak_only=false;
+        AUTO_PREREL="${AUTO_TWEAK_TXT}"
         if [ "${PREV_TWEAK_TXT}" != "${AUTO_TWEAK_TXT}" ]; then
             _tweak_="$(msgRed ${AUTO_TWEAK_TXT})";
         else
             _tweak_="$(valMsg ${AUTO_TWEAK_TXT})";
         fi
+        SEPC="."
     fi
 
-    if [ -n "${AUTO_TWEAK_NUM}" ]; then
+    if [ "${#AUTO_TWEAK_NUM}" = "8" -o "${#PREV_TWEAK_NUM}" = "8" ]; then
         is_sha_tweak_only=false;
-        if [ "${#AUTO_TWEAK_NUM}" = "8" ]; then
-            # the numberic is YYYYMMDD format, update it
-            _tweak_="${_tweak_}$(msgRed .$(date +%Y%m%d))";
+        # the numberic is YYYYMMDD format, update it
+        CURRENT_DATE=$(date +%Y%m%d)
+        AUTO_PREREL="${AUTO_PREREL}${SEPC}${CURRENT_DATE}"
+        if [ "${CURRENT_DATE}" = "${PREV_TWEAK_NUM}" ]; then
+            _tweak_="${_tweak_}${SEPC}$(valMsg ${CURRENT_DATE})";
         else
+            _tweak_="${_tweak_}${SEPC}$(msgRed ${CURRENT_DATE})";
+        fi
+    else
+        if [ -n "${#AUTO_TWEAK_NUM}" ]; then
+            is_sha_tweak_only=false;
             # update the numberic to the auto increatment
-            _tweak_="${_tweak_}$(msgRed .${AUTO_TWEAK_NUM})";
+            AUTO_PREREL="${AUTO_PREREL}${SEPC}${AUTO_TWEAK_NUM}"
+            _tweak_="${_tweak_}${SEPC}$(msgRed ${AUTO_TWEAK_NUM})";
         fi
     fi
 
-    if [ -n "${PREV_TWEAK_SHA}" ]; then
-        full_commit=$(git log --pretty=oneline -1 | cut -f1 -d' ')
-        short_commit=${full_commit:0:10}
-        if [ "${short_commit}" != "${PREV_TWEAK_SHA}" ]; then
-            # update to newest commit SHA1
-            _tweak_="${_tweak_}+$(msgRed ${short_commit})";
-            AUTO_PREREL="${AUTO_PREREL}+${short_commit}"
-        else
-            # SHA1 no changed, just keep the old value
-            _tweak_="${_tweak_}+$(valMsg ${PREV_TWEAK_SHA})";
-            AUTO_PREREL="${AUTO_PREREL}+${PREV_TWEAK_SHA}"
-        fi
+    # always append current SHA1 for release tracing
+    full_commit=$(git log --pretty=oneline -1 | cut -f1 -d' ')
+    short_commit=${full_commit:0:10}
+    if [ "${short_commit}" != "${PREV_TWEAK_SHA}" ]; then
+        # update to newest commit SHA1
+        _tweak_="${_tweak_}+$(msgRed ${short_commit})";
+        AUTO_PREREL="${AUTO_PREREL}+${short_commit}"
+    else
+        # SHA1 no changed, just keep the old value
+        _tweak_="${_tweak_}+$(valMsg ${PREV_TWEAK_SHA})";
+        AUTO_PREREL="${AUTO_PREREL}+${PREV_TWEAK_SHA}"
     fi
 fi
 
-n_major="${_major_}"
-n_minor="${_minor_}"
-n_patch="${_patch_}"
-n_tweak="${_tweak_}"
+a_major="${_major_}"
+a_minor="${_minor_}"
+a_patch="${_patch_}"
+a_tweak="${_tweak_}"
 
 BUMP_SEMVER=false;
 BUMP_SEMVER_BY_USER=true;
 infoMsg "----------------------------------------------------------------";
-infoMsg "SemVer OLD => Major(${o_major})\tMinor(${o_minor})\tPatch(${o_patch})\tTweak(${o_tweak})";
-infoMsg "SemVer NEW => Major(${n_major})\tMinor(${n_minor})\tPatch(${n_patch})\tTweak(${n_tweak})";
-infoMsgL "Use NEW Semantic Version (y/n) [y]: ";
+# The previous latest tag
+if ${isGitRepo}; then
+    LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "");
+    [ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit, no tags";
+    [ -n "${LATEST_TAG}" ] && LATEST_TAG=$(standard-release --newest-tag=true)
+fi
+infoMsg "The Latest Release Tag: $(msgRed ${LATEST_TAG})";
+infoMsg "SemVer FILE => M(${s_major})\tm(${s_minor})\tP(${s_patch})\tT(${s_tweak})";
+infoMsg "SemVer AUTO => M(${a_major})\tm(${a_minor})\tP(${a_patch})\tT(${a_tweak})";
+infoMsgL "Use AUTO Semantic Version (y/n) [y]: ";
 usrInput="Y"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 [ -z "${usrInput}" ] && usrInput='Y'; # Just Enter is Yes
 if isYes "${usrInput}"; then
     BUMP_SEMVER=true;
@@ -539,6 +569,7 @@ if ${BUMP_SEMVER_BY_USER}; then
     infoMsgL "New SemVer Major [$(valMsg ${VERSION_MAJOR})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
+    ! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -555,6 +586,7 @@ if ${BUMP_SEMVER_BY_USER}; then
     infoMsgL "New SemVer Minor [$(valMsg ${VERSION_MINOR})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
+    ! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -571,6 +603,7 @@ if ${BUMP_SEMVER_BY_USER}; then
     infoMsgL "New SemVer Patch [$(valMsg ${VERSION_PATCH})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
+    ! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -588,6 +621,7 @@ if ${BUMP_SEMVER_BY_USER}; then
     infoMsgL "New SemVer Tweak ($(keyMsg SKIP)) [$(valMsg ${VERSION_TWEAK})]: ";
     usrInput=""; # default value for none interactive mode
     ${IS_INTERACTIVE} && read -p "" usrInput;
+    ! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
     case "${usrInput}" in
     "")
         # Just Enter is empty, just use it, no touching
@@ -616,32 +650,28 @@ VERSION_TWEAK_SHA="";
     USED_TWEAK_NUM=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\3/");
     USED_TWEAK_SHA=$(echo "${VERSION_TWEAK}" | ${_sed} "s/^${SRLC_REG}$/\5/");
 
-    IS_TXT=$(echo "${USED_TWEAK_TXT}" | ${_sed} -n "/^[a-z]*$/p");
-    IS_NUM=$(echo "${USED_TWEAK_NUM}" | ${_sed} -n "/^[0-9]*$/p");
-    IS_SHA=$(echo "${USED_TWEAK_SHA}" | ${_sed} -n "/^[a-f0-9]*$/p");
+    USED_TWEAK_TXT=$(echo "${USED_TWEAK_TXT}" | ${_sed} -n "/^[a-z]*$/p");
+    USED_TWEAK_NUM=$(echo "${USED_TWEAK_NUM}" | ${_sed} -n "/^[0-9]*$/p");
+    USED_TWEAK_SHA=$(echo "${USED_TWEAK_SHA}" | ${_sed} -n "/^[a-f0-9]*$/p");
 
-    IS_OK=false;
-    tweakInfo="$(valMsg ${VERSION_TWEAK})";
-    for item in ${SRLC_CAN}; do
-        [ "${USED_TWEAK_TXT}" = "${item}" ] && IS_OK=true && break;
-    done
+    if [ -n "${USED_TWEAK_TXT}" ]; then
+        IS_OK=false;
+        tweakInfo="$(valMsg ${VERSION_TWEAK})";
+        for item in ${SRLC_CAN}; do
+            [ "${USED_TWEAK_TXT}" = "${item}" ] && IS_OK=true && break;
+        done
 
-    if ! ${IS_OK}; then
-        if [ -z "${IS_NUM}" -a -z "${IS_SHA}" ]; then
+        if ! ${IS_OK}; then
             errMsg "$(keyMsg TWEAK)(${tweakInfo}) shoule be one of: ${SRLC_HELP}";
         fi
     fi
 
-    [ -z "${IS_TXT}" ] && USED_TWEAK_TXT="";
-    [ -z "${IS_NUM}" ] && USED_TWEAK_NUM="";
-    [ -z "${IS_SHA}" ] && USED_TWEAK_SHA="";
-
     VERSION_TWEAK_TXT="${USED_TWEAK_TXT}";
     VERSION_TWEAK_NUM="${USED_TWEAK_NUM}";
     VERSION_TWEAK_SHA="${USED_TWEAK_SHA}";
-    debugMsg "$(keyMsg Final tweak text): [$(valMsg ${VERSION_TWEAK_TXT})]";
-    debugMsg "$(keyMsg Final tweak nums): [$(valMsg ${VERSION_TWEAK_NUM})]";
-    debugMsg "$(keyMsg Final tweak nums): [$(valMsg ${VERSION_TWEAK_SHA})]";
+    #debugMsg "$(keyMsg Final tweak text): [$(valMsg ${VERSION_TWEAK_TXT})]";
+    #debugMsg "$(keyMsg Final tweak nums): [$(valMsg ${VERSION_TWEAK_NUM})]";
+    #debugMsg "$(keyMsg Final tweak nums): [$(valMsg ${VERSION_TWEAK_SHA})]";
 }
 
 if [ -z "${VERSION_TWEAK}" ]; then
@@ -682,35 +712,37 @@ _patch_="$(valMsg ${VERSION_PATCH})";
     && _patch_="$(msgRed ${VERSION_PATCH})";
 
 _tweak_="$(valMsg ${VERSION_TWEAK})";
-if [ "${PREV_TWEAK}" != "${VERSION_TWEAK}" ]; then
+if [ -n "${VERSION_TWEAK}" ]; then
     _tweak_=""; # clean it
+    SEPC=""
     if [ -n "${VERSION_TWEAK_TXT}" ]; then
         if [ "${PREV_TWEAK_TXT}" != "${VERSION_TWEAK_TXT}" ]; then
             _tweak_="$(msgRed ${VERSION_TWEAK_TXT})";
         else
             _tweak_="$(valMsg ${VERSION_TWEAK_TXT})";
         fi
+        SEPC="."
     fi
 
     if [ -n "${VERSION_TWEAK_NUM}" ]; then
         if [ "${PREV_TWEAK_NUM}" != "${VERSION_TWEAK_NUM}" ]; then
-            _tweak_="${_tweak_}$(msgRed .${VERSION_TWEAK_NUM})";
+            _tweak_="${_tweak_}${SEPC}$(msgRed ${VERSION_TWEAK_NUM})";
         else
-            _tweak_="${_tweak_}$(valMsg .${VERSION_TWEAK_NUM})";
+            _tweak_="${_tweak_}${SEPC}$(valMsg ${VERSION_TWEAK_NUM})";
         fi
     fi
 
     if [ -n "${VERSION_TWEAK_SHA}" ]; then
         if [ "${PREV_TWEAK_SHA}" != "${VERSION_TWEAK_SHA}" ]; then
-            _tweak_="${_tweak_}$(msgRed +${VERSION_TWEAK_SHA})";
+            _tweak_="${_tweak_}+$(msgRed ${VERSION_TWEAK_SHA})";
         else
-            _tweak_="${_tweak_}$(valMsg +${VERSION_TWEAK_SHA})";
+            _tweak_="${_tweak_}+$(valMsg ${VERSION_TWEAK_SHA})";
         fi
     fi
 fi
 
 # Make the output pretty look
-maxStrLen=$(maxNum ${#PREV_MAJOR} ${#PREV_MINOR} ${#PREV_PATCH} ${#PREV_TWEAK});
+maxStrLen=$(maxNum ${#PREV_MAJOR} ${#PREV_MINOR} ${#PREV_PATCH} ${#PREV_TWEAK_NC});
 
 indentA="";
 strLen=${#PREV_MAJOR};
@@ -734,7 +766,7 @@ while [ ${strLen} -le ${maxStrLen} ]; do
 done
 
 indentD="";
-strLen=${#PREV_TWEAK};
+strLen=${#PREV_TWEAK_NC};
 while [ ${strLen} -le ${maxStrLen} ]; do
   let strLen=strLen+1;
   indentD="${indentD} ";
@@ -746,19 +778,12 @@ done
 #debugMsg "$(keyMsg Patch indent): [${indentC}]";
 #debugMsg "$(keyMsg Tweak indent): [${indentD}]";
 
-# The previous latest tag
-if ${isGitRepo}; then
-    LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "");
-    [ -z "${LATEST_TAG}" ] && LATEST_TAG="init commit";
-fi
-
 infoMsg "----------------------------------------------------------------";
-infoMsg "Recently tag : $(msgRed ${LATEST_TAG})";
-infoMsg "Release  tag : $(valMsg ${RELEASE_TAG})";
-infoMsg "Release major: $(valMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
-infoMsg "Release minor: $(valMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
-infoMsg "Release patch: $(valMsg ${PREV_PATCH})${indentC}=> ${_patch_}";
-infoMsg "Release tweak: $(valMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
+infoMsg "Release Major: $(valMsg ${PREV_MAJOR})${indentA}=> ${_major_}";
+infoMsg "Release Minor: $(valMsg ${PREV_MINOR})${indentB}=> ${_minor_}";
+infoMsg "Release Patch: $(valMsg ${PREV_PATCH})${indentC}=> ${_patch_}";
+infoMsg "Release Tweak: $(valMsg ${PREV_TWEAK})${indentD}=> ${_tweak_}";
+infoMsg "Release TagIs: $(msgBlue ${RELEASE_TAG})";
 
 # Update Version
 if ${BUMP_SEMVER}; then
@@ -776,6 +801,7 @@ infoMsgL "Changelog $(keyMsg Release) or $(keyMsg Unreleased) (y/n) [n]: ";
 usrInput="N"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="N"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 if isYes "${usrInput}"; then
     SRA_R="-r";
 fi
@@ -787,38 +813,45 @@ if $CHANGELOG_UPDATE; then
     rm ${CHANGELOG}.bk;
 fi
 
-infoMsgL "Show $(valMsg ${CHANGELOG}) diff (y/n) [n]: ";
+infoMsg "----------------------------------------------------------------";
+repo_fname=${CHANGELOG#*${REPO_DIR}/}
+infoMsgL "Show $(valMsg ${repo_fname}) Diff (y/n) [n]: ";
 usrInput="N"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="N"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 if isYes "${usrInput}"; then
     ${isGitRepo} && git diff ${CHANGELOG};
 fi
 
 infoMsg "----------------------------------------------------------------";
-infoMsgL "Show $(valMsg ${VS_VFILE}) diff (y/n) [n]: ";
+repo_fname=${VS_VFILE#*${REPO_DIR}/}
+infoMsgL "Show $(valMsg ${repo_fname}) Diff (y/n) [n]: ";
 usrInput="N"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="N"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 if isYes "${usrInput}"; then
     ${isGitRepo} && git diff ${VS_VFILE};
 fi
 
 infoMsg "----------------------------------------------------------------";
-infoMsgL "Build the project (Build Command or $(keyMsg SKIP)) [make]: ";
+infoMsgL "Project Build Command ($(keyMsg SKIP)) [make]: ";
 usrInput="make"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="SKIP"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 [ -z "${usrInput}" ] && usrInput='make'; # Just Enter
 if [ "${usrInput}" != "SKIP" ]; then
     ${usrInput}; # the project build command
 fi
 
 infoMsg "----------------------------------------------------------------";
-infoMsgL "Run programme to confirm (Command to run) []: ";
+infoMsgL "The Commands to Run for Confirming (Commands) []: ";
 usrInput=""; # default value for none interactive mode
 ${IS_TESTING} && usrInput=""; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 if [ -n "${usrInput}" ]; then
     ${usrInput}; # the executable programme to run
 fi
@@ -835,20 +868,22 @@ TAG_MSG="${TAG_HDR}${MSG_BDY}";
 COMMIT_MSG="${CMT_HDR}${MSG_BDY}";
 
 infoMsg "----------------------------------------------------------------";
-infoMsg "The message for signed-off commit";
+infoMsg "The Signed-off Commit Message:";
 ! ${IS_TESTING} && printf "$(msgGreen "${COMMIT_MSG}")\n";
 
-infoMsg "The message for signed annotated tag";
+infoMsg "----------------------------------------------------------------";
+infoMsg "The Signed Annotated Tag Message:";
 ! ${IS_TESTING} && printf "$(msgGreen "${TAG_MSG}")\n";
 
 # Really want to do this
 infoMsg "----------------------------------------------------------------";
-infoMsgL "Confirm $(valMsg ${VCS}) commit & tag (y/n) [n]: ";
+infoMsgL "Confirm $(valMsg ${VCS}) Commit & Tag (y/n) [n]: ";
 usrInput="N"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
+! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
 if isNo "${usrInput}"; then
-    errMsg "Release stop, confirm with $(keyMsg y) or $(keyMsg Y)";
+    errMsg "Release STOP, Confirm with $(keyMsg y) or $(keyMsg Y)";
 fi
 
 if isYes "${usrInput}"; then
@@ -866,6 +901,6 @@ if isYes "${usrInput}"; then
     fi
 fi
 
-infoMsg "################";
-infoMsg "# Release Done #";
-infoMsg "################";
+infoMsg "#################";
+infoMsg "# Release Done! #";
+infoMsg "#################";

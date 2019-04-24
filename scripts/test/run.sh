@@ -126,12 +126,17 @@ function syncGitRepoInfo()
 
     cd - > /dev/null;
     export LANG=en_US.UTF-8;
-    cp -f RepoInfo.$TYPE.sh .sync-repo-info.sh;
-    QUIET="${QUIET} INTERACTIVE=false";
+    cp -f RepoInfo.$TYPE.sh .sync-release.sh;
+
+    if [ "$3" = "USER" ]; then
+        QUIET="INTERACTIVE=true";
+    else
+        QUIET="${QUIET} INTERACTIVE=false";
+    fi
 
     ${SyncRelease} $QUIET; # auto semver: v0.0.1
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking GIT repo(R): REPO/.sync-repo-info.sh";
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/.sync-release.sh";
 
     semver_tag="v0.0.1-dev";
     git checkout .
@@ -140,7 +145,7 @@ function syncGitRepoInfo()
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
     isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
 
-    git tag -d ${semver_tag}
+    git tag -d ${semver_tag} > /dev/null 2>&1
     semver_tag="v0.0.2-pre.110";
     git checkout .
     git tag ${semver_tag}; # auto semver: v0.0.2-pre.111
@@ -148,7 +153,7 @@ function syncGitRepoInfo()
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
     isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
 
-    git tag -d ${semver_tag}
+    git tag -d ${semver_tag} > /dev/null 2>&1
     semver_tag="v0.0.3-rc.20190421";
     git checkout .
     git tag ${semver_tag}; # auto semver: v0.0.3-rc.XXXXXXXX
@@ -156,7 +161,7 @@ function syncGitRepoInfo()
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
     isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
 
-    git tag -d ${semver_tag}
+    git tag -d ${semver_tag} > /dev/null 2>&1
     semver_tag="v0.0.4-rc.20190422+abcdef1234";
     git checkout .
     git tag ${semver_tag}; # auto semver: v0.0.4-rc.XXXXXXXX
@@ -165,16 +170,16 @@ function syncGitRepoInfo()
     isTestOk "${isOk}" "Checking GIT repo(R): REPO/RepoInfo.$TYPE.sh";
 
     git checkout .
-    git tag -d ${semver_tag}
+    git tag -d ${semver_tag} > /dev/null 2>&1
     semver_tag="v0.0.5-rc.20190423+abcdef1234";
     git tag ${semver_tag}; # auto semver: v0.0.5-rc.XXXXXXXX
     mkdir -p subdir; cd subdir;
-    cp -f ../.sync-repo-info.sh sync-repo-info.sh
-    ${SyncRelease} $QUIET CONFIG=sync-repo-info.sh;
+    cp -f ../.sync-release.sh sync-release.sh
+    ${SyncRelease} $QUIET CONFIG=sync-release.sh;
     if [ "$?" = "0" ]; then isOk=true; else isOk=false; fi
-    isTestOk "${isOk}" "Checking GIT repo(R): REPO/subdir/sync-repo-info.sh";
+    isTestOk "${isOk}" "Checking GIT repo(R): REPO/subdir/sync-release.sh";
 
-    git tag -d ${semver_tag}
+    git tag -d ${semver_tag} > /dev/null 2>&1
 }
 
 function syncSvnRepoInfo()
@@ -209,19 +214,19 @@ function syncSvnRepoInfo()
 function syncForGitRepo()
 {
     echo '----------------------------------------'
-    syncGitRepoInfo h TESTING=true;
+    syncGitRepoInfo h TESTING=true $1
     echo '----------------------------------------'
-    syncGitRepoInfo c1 TESTING=true
+    syncGitRepoInfo c1 TESTING=true $1
     echo '----------------------------------------'
-    syncGitRepoInfo c2 TESTING=true
+    syncGitRepoInfo c2 TESTING=true $1
     echo '----------------------------------------'
-    syncGitRepoInfo cc TESTING=true
+    syncGitRepoInfo cc TESTING=true $1
     echo '----------------------------------------'
-    syncGitRepoInfo cpp TESTING=true
+    syncGitRepoInfo cpp TESTING=true $1
     echo '----------------------------------------'
-    syncGitRepoInfo java TESTING=true
+    syncGitRepoInfo java TESTING=true $1
     echo '----------------------------------------'
-    syncGitRepoInfo cmake TESTING=true
+    syncGitRepoInfo cmake TESTING=true $1
 }
 
 function syncForSvnRepo()
@@ -248,7 +253,7 @@ function main()
     mkdir ${T_TEMP_DIR}
 
     initGitRepo
-    syncForGitRepo
+    syncForGitRepo $1
 
     #initSvnRepo
     #syncForSvnRepo
@@ -261,4 +266,4 @@ function main()
     #kill ${SVNPID}
 }
 
-main
+main $1

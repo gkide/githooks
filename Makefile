@@ -4,9 +4,14 @@ MAKEFLAGS += --no-print-directory
 all:
 	@echo "Build done."
 
-PHONY += test
-test:
-	@scripts/test/run.sh
+PHONY += test-auto
+test-auto:
+	@scripts/test/run.sh AUTO
+
+PHONY += test-user
+test-user:
+	@scripts/test/run.sh USER
+
 
 PHONY += release
 release:
