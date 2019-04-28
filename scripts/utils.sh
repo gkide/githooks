@@ -174,6 +174,22 @@ function usage_example_hostAPIs()
     fi
 }
 
+# Fix path for windows only
+function pathFixForWindows()
+{
+    if hostIsWindows; then
+        drive=$(echo "${1}" | ${_sed} "s/^([A-Za-z]:)*(\/.*)/\1/");
+        path=$(echo "${1}" | ${_sed} "s/^([A-Za-z]:)*(\/.*)/\2/");
+        if [ -n "${drive}" ]; then
+            typeset -l drive=$(echo "${drive}" | ${_sed} "s/^([A-Za-z]):/\1/");
+            echo "/${drive}${path}"
+            return 0;
+        fi
+    fi
+
+    echo "$1"; return 0;
+}
+
 #####################
 # man console_codes #
 #####################
@@ -575,7 +591,9 @@ function escREMC()
     # output is like: gsub(/\*/,"\*",$1) { print $1; }
     AWK_ARGS="gsub(/""\\${REMC}/,"\""\\"${REMC}""\"",\$1) { print \$1; }";
     if [ "${RE_space}" != "" ]; then
-        AWK_ARGS="gsub(/""\\${REMC}/,"\""\\""s*"\"",\$1) { print \$1; }";
+        # gsub(/SPACE/,"\s*",$1) { print \$1; }
+        # gsub(/ISTAB/,"\s*",$1) { print \$1; }
+        AWK_ARGS="gsub(/\\${REMC}/,\"\\\\s*\",\$1) { print \$1; }";
     fi
 
     if [ "${hasMC}" != "" ]; then
