@@ -682,28 +682,34 @@ VERSION_TWEAK_SHA="";
     #debugMsg "$(keyMsg Final tweak nums): [$(valMsg ${VERSION_TWEAK_SHA})]";
 }
 
+RELEASE_TAG="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}";
+
 if [ -z "${VERSION_TWEAK}" ]; then
-    RELEASE_TAG="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+    RELEASE_TAG_FULL="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
 else
     if ${is_sha_tweak_only}; then
-        RELEASE_TAG="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}${VERSION_TWEAK}"
+        RELEASE_TAG_FULL="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}${VERSION_TWEAK}"
     else
-        RELEASE_TAG="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_TWEAK}"
+        RELEASE_TAG_FULL="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_TWEAK}"
     fi
 fi
 
 { [ -z "${VERSION_MAJOR}" ] || [ -z "{$VERSION_MINOR}" ] || [ -z "${VERSION_PATCH}" ]; } \
-    && errMsg "Release semver($(valMsg ${RELEASE_TAG})) error";
+    && errMsg "Release semver($(valMsg ${RELEASE_TAG_FULL})) error";
 
-# Check if RELEASE_TAG is valid semver
-if ! $(standard-release -x --is-semver "${RELEASE_TAG}"); then
-    errMsg "Invalid release semver($(valMsg ${RELEASE_TAG}))";
+# Check if RELEASE_TAG_FULL is valid semver
+if ! $(standard-release -x --is-semver "${RELEASE_TAG_FULL}"); then
+    errMsg "Invalid release semver($(valMsg ${RELEASE_TAG_FULL}))";
 fi
 
 if ${isGitRepo}; then
     for tag in $(git tag --list); do
-        [ "${tag}" = "${RELEASE_TAG}" ] \
-            && errMsg "The semver tag $(valMsg ${tag}) already exists";
+        if [ "${tag}" = "${RELEASE_TAG}" ]; then
+            RELEASE_TAG="${RELEASE_TAG_FULL}";
+            if [ "${tag}" = "${RELEASE_TAG_FULL}" ]; then
+                errMsg "The semver tag $(valMsg ${tag}) already exists";
+            fi
+        fi
     done
 fi
 
