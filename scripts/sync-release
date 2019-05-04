@@ -518,7 +518,7 @@ if [ "${PREV_TWEAK}" != "${AUTO_PREREL}" ]; then
             _tweak_="${_tweak_}${SEPC}$(msgRed ${CURRENT_DATE})";
         fi
     else
-        if [ -n "${#AUTO_TWEAK_NUM}" ]; then
+        if [ -n "${AUTO_TWEAK_NUM}" ]; then
             is_sha_tweak_only=false;
             # update the numberic to the auto increatment
             AUTO_PREREL="${AUTO_PREREL}${SEPC}${AUTO_TWEAK_NUM}"
@@ -683,6 +683,9 @@ VERSION_TWEAK_SHA="";
 }
 
 RELEASE_TAG="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}";
+if [ -n "${VERSION_TWEAK_TXT}" ]; then
+    RELEASE_TAG="${RELEASE_TAG}-${VERSION_TWEAK_TXT}";
+fi
 
 if [ -z "${VERSION_TWEAK}" ]; then
     RELEASE_TAG_FULL="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
