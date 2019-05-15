@@ -874,8 +874,8 @@ if [ -n "${usrInput}" ]; then
 fi
 
 # Commit & Tag
-TAG_HDR="chore(auto1): tag ${RELEASE_TAG}";
-CMT_HDR="chore(auto2): release ${RELEASE_TAG}";
+TAG_HDR="chore(auto): release ${RELEASE_TAG}";
+CMT_HDR="chore(auto): version ${RELEASE_TAG}";
 MSG_BDY="
 
 - Detail changes see ${CHANGELOG}
