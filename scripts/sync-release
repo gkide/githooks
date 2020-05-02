@@ -555,8 +555,8 @@ if ${isGitRepo}; then
     [ -n "${LATEST_TAG}" ] && LATEST_TAG=$(standard-release --newest-tag=true)
 fi
 infoMsg "The Latest Release Tag: $(msgRed ${LATEST_TAG})";
-infoMsg "SemVer FILE => M(${s_major})\tm(${s_minor})\tP(${s_patch})\tT(${s_tweak})";
-infoMsg "SemVer AUTO => M(${a_major})\tm(${a_minor})\tP(${a_patch})\tT(${a_tweak})";
+infoMsg "SemVer FILE => M(${s_major})\tM(${s_minor})\tP(${s_patch})\tT(${s_tweak})";
+infoMsg "SemVer AUTO => M(${a_major})\tM(${a_minor})\tP(${a_patch})\tT(${a_tweak})";
 infoMsgL "Use AUTO Semantic Version (y/n) [y]: ";
 usrInput="Y"; # default value for none interactive mode
 ${IS_TESTING} && usrInput="Y"; # testing & none interactive mode
@@ -814,12 +814,23 @@ fi
 
 infoMsg "----------------------------------------------------------------";
 SRA_R=""; # standard-release arguments for changelog release
-infoMsgL "Changelog $(keyMsg Release) or $(keyMsg Unreleased) (y/n) [n]: ";
-usrInput="N"; # default value for none interactive mode
-${IS_TESTING} && usrInput="N"; # testing & none interactive mode
+infoMsgL "Changelog $(keyMsg Release) or $(keyMsg Unreleased) (R/U) [U]: ";
+usrInput="U"; # default value for none interactive mode
+${IS_TESTING} && usrInput="U"; # testing & none interactive mode
 ${IS_INTERACTIVE} && read -p "" usrInput;
 ! ${IS_INTERACTIVE} && ! ${__SKIP_ALL_MSG} echo "";
-if isYes "${usrInput}"; then
+
+function isRelease()
+{
+    case "$*" in
+    "R" | "r" | "Release" | "RELEASE" | "release")
+        return 0;; # true
+    *)
+        return 1;; # false
+    esac
+}
+
+if isRelease "${usrInput}"; then
     SRA_R="-r";
 fi
 
@@ -874,8 +885,8 @@ if [ -n "${usrInput}" ]; then
 fi
 
 # Commit & Tag
-TAG_HDR="chore(auto): release ${RELEASE_TAG}";
-CMT_HDR="chore(auto): version ${RELEASE_TAG}";
+TAG_HDR="chore: release version ${RELEASE_TAG}";
+CMT_HDR="chore: release version ${RELEASE_TAG}";
 MSG_BDY="
 
 - Detail changes see ${CHANGELOG}
