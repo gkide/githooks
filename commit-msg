@@ -27,33 +27,34 @@ function backup_msg_exit()
         exit 1
     fi
 
-    local tmp_dir="${GIT_REPO_DIR}/todo"
-    local tmp_msg_file="${tmp_dir}/commit-msg.cache"
-
-    if [ ! -d "${tmp_dir}" ]; then mkdir "${tmp_dir}"; fi
-    cat "${COMMIT_MSG_FILE}" >> ${tmp_msg_file}
-
-    local usr_msg=$(grep "^[^#]" "${tmp_msg_file}")
-
-    if [ "${usr_msg}" != "" ]; then
-        echo "${usr_msg}" > ${tmp_msg_file}
+    local ctrl_wip=$(git ls-files ${GIT_REPO_DIR}/wip)
+    if [ ! -z "${ctrl_wip}" ]; then
+        exit 1 # wip/ is under git control, skip
     fi
 
-    local head_1_msg=$(head -n1 ${tmp_msg_file})
-    local tail_1_msg=$(tail -n1 ${tmp_msg_file})
+    local wip_dir="${GIT_REPO_DIR}/wip"
+    local tmp_file="${wip_dir}/commit-msg.cache"
+    local usr_msg=$(grep "^[^#]" "${COMMIT_MSG_FILE}")
 
+    if [ "${usr_msg}" == "" ]; then
+        exit 1 # nothing to cached
+    fi
+
+    if [ ! -d "${wip_dir}" ]; then mkdir "${wip_dir}"; fi
+    echo "${usr_msg}" > ${tmp_file}
+
+    local head_1_msg=$(head -n1 ${tmp_file})
+    local tail_1_msg=$(tail -n1 ${tmp_file})
     if [ "${head_1_msg}" = "${tail_1_msg}" ]; then
-        usr_msg=$(grep "^Signed-off-by: .*" "${tmp_msg_file}")
-
-        # check if we forget signed-off-by, but input commit message, keep it
+        usr_msg=$(grep "^Signed-off-by: .*" "${tmp_file}")
         if [ "${usr_msg}" != "" ]; then
-            # only signed off line, just remove it
-            rm ${tmp_msg_file}
+            # only signed off line, remove it
+            rm ${tmp_file}
             exit 1
         fi
     fi
 
-    echo "Cached commit message: $(msgBrown ${tmp_msg_file})"
+    echo "Cached commit message: $(msgBrown ${tmp_file})"
     exit 1
 }
 
