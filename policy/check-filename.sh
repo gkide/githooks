@@ -15,18 +15,18 @@ exec 1>&2
 # them from being added to the repository. We exploit the fact that the
 # printable range starts at the space character and ends with tilde.
 if [ "$allownonascii" != "true" ] &&
-    # Note that the use of brackets around a tr range is ok here, (it's
-    # even required, for portability to Solaris 10's /usr/bin/tr), since
-    # the square bracket bytes happen to fall in the designated range.
-    test $(git diff --cached --name-only --diff-filter=A -z HEAD |
-           LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+  # Note that the use of brackets around a tr range is ok here, (it's
+  # even required, for portability to Solaris 10's /usr/bin/tr), since
+  # the square bracket bytes happen to fall in the designated range.
+  test $(git diff --cached --name-only --diff-filter=A -z HEAD \
+    | LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
 then
-    echo "$(msgRed Error): Attempt to add a non-ASCII file name."
-    echo
-    echo "This can cause problems if you want to work with people on other platforms."
-    echo "To be portable it is advisable to rename the file."
-    echo
-    echo "If you know what you are doing you can disable this check using:"
-    echo "$ $(msgRed 'git config hooks.allownonascii true')"
-    exit 1
+  echo "$(msgRed Error): Attempt to add a non-ASCII file name."
+  echo
+  echo "This can cause problems if you want to work with people on other platforms."
+  echo "To be portable it is advisable to rename the file."
+  echo
+  echo "If you know what you are doing you can disable this check using:"
+  echo "$ $(msgRed 'git config hooks.allownonascii true')"
+  exit 1
 fi

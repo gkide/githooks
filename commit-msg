@@ -21,41 +21,41 @@ source "${POLICY_DIR}/utils.sh"
 
 function backup_msg_exit()
 {
-    local msg=$(cat ${COMMIT_MSG_FILE})
+  local msg=$(cat ${COMMIT_MSG_FILE})
 
-    if [ -z "${msg}" ] ; then
-        exit 1
-    fi
-
-    local ctrl_wip=$(git ls-files ${GIT_REPO_DIR}/wip)
-    if [ ! -z "${ctrl_wip}" ]; then
-        exit 1 # wip/ is under git control, skip
-    fi
-
-    local wip_dir="${GIT_REPO_DIR}/wip"
-    local tmp_file="${wip_dir}/commit-msg.cache"
-    local usr_msg=$(grep "^[^#]" "${COMMIT_MSG_FILE}")
-
-    if [ "${usr_msg}" == "" ]; then
-        exit 1 # nothing to cached
-    fi
-
-    if [ ! -d "${wip_dir}" ]; then mkdir "${wip_dir}"; fi
-    echo "${usr_msg}" > ${tmp_file}
-
-    local head_1_msg=$(head -n1 ${tmp_file})
-    local tail_1_msg=$(tail -n1 ${tmp_file})
-    if [ "${head_1_msg}" = "${tail_1_msg}" ]; then
-        usr_msg=$(grep "^Signed-off-by: .*" "${tmp_file}")
-        if [ "${usr_msg}" != "" ]; then
-            # only signed off line, remove it
-            rm ${tmp_file}
-            exit 1
-        fi
-    fi
-
-    echo "Cached commit message: $(msgBrown ${tmp_file})"
+  if [ -z "${msg}" ] ; then
     exit 1
+  fi
+
+  local ctrl_wip=$(git ls-files ${GIT_REPO_DIR}/wip)
+  if [ ! -z "${ctrl_wip}" ]; then
+    exit 1 # wip/ is under git control, skip
+  fi
+
+  local wip_dir="${GIT_REPO_DIR}/wip"
+  local tmp_file="${wip_dir}/commit-msg.cache"
+  local usr_msg=$(grep "^[^#]" "${COMMIT_MSG_FILE}")
+
+  if [ "${usr_msg}" == "" ]; then
+    exit 1 # nothing to cached
+  fi
+
+  if [ ! -d "${wip_dir}" ]; then mkdir "${wip_dir}"; fi
+  echo "${usr_msg}" > ${tmp_file}
+
+  local head_1_msg=$(head -n1 ${tmp_file})
+  local tail_1_msg=$(tail -n1 ${tmp_file})
+  if [ "${head_1_msg}" = "${tail_1_msg}" ]; then
+    usr_msg=$(grep "^Signed-off-by: .*" "${tmp_file}")
+    if [ "${usr_msg}" != "" ]; then
+      # only signed off line, remove it
+      rm ${tmp_file}
+      exit 1
+    fi
+  fi
+
+  echo "Cached commit message: $(msgBrown ${tmp_file})"
+  exit 1
 }
 
 # check the signed off

@@ -35,28 +35,28 @@ COMMIT_MSG_FILE=$1
 /usr/bin/perl -i.bak -ne 'print unless(m/^. Please enter the commit message/..m/^#$/)' "${COMMIT_MSG_FILE}"
 
 case "$COMMIT_SOURCE,$SHA1" in
-    merge,)
-        # Comments out the "Conflicts:" part of a merge commit.
-        /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "${COMMIT_MSG_FILE}"
-        ;;
+  merge,)
+    # Comments out the "Conflicts:" part of a merge commit.
+    /usr/bin/perl -i.bak -ne 's/^/# /, s/^# #/#/ if /^Conflicts/ .. /#/; print' "${COMMIT_MSG_FILE}"
+    ;;
 
-    commit,*)
-        # git commit --amend
-        # echo "do not $(msgRed amend) pushed commit."
-        ;;
+  commit,*)
+    # git commit --amend
+    # echo "do not $(msgRed amend) pushed commit."
+    ;;
 
-    message,*)
-        ${POLICY_DIR}/check-msg-fmt.sh "${COMMIT_MSG_FILE}" || exit 1
-        ;;
+  message,*)
+    ${POLICY_DIR}/check-msg-fmt.sh "${COMMIT_MSG_FILE}" || exit 1
+    ;;
 
-    template,)
-        # git commit
-        # echo "$(msgRed template): fill template commit message"
-        # exit 1
-        ;;
+  template,)
+    # git commit
+    # echo "$(msgRed template): fill template commit message"
+    # exit 1
+    ;;
 
-    *)
-        ;;
+  *)
+    ;;
 esac
 
 # all pass continue

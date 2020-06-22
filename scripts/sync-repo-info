@@ -26,26 +26,26 @@ _sed=$([ "$(uname)" = "Darwin" ] && echo "sed -E" || echo "sed -r");
 USR_CONFIG="";
 
 for item in $*; do
-    if [ "0" = "$#" ]; then
-        break;
-    fi
+  if [ "0" = "$#" ]; then
+    break;
+  fi
 
-    KEY=$(echo ${item} | sed "s/\([a-zA-Z]*\)=\([a-zA-Z0-9\/\._-]*\)/\1/g");
-    VAL=$(echo ${item} | sed "s/\([a-zA-Z]*\)=\([a-zA-Z0-9\/\._-]*\)/\2/g");
-    # infoMsg "$# [$item] => [$KEY], [$VAL]";
+  KEY=$(echo ${item} | sed "s/\([a-zA-Z]*\)=\([a-zA-Z0-9\/\._-]*\)/\1/g");
+  VAL=$(echo ${item} | sed "s/\([a-zA-Z]*\)=\([a-zA-Z0-9\/\._-]*\)/\2/g");
+  # infoMsg "$# [$item] => [$KEY], [$VAL]";
 
-    [ "$KEY" = "" -o "$KEY" = "${item}" ] && break;
-    [ "$VAL" = "" -o "$VAL" = "${item}" ] && break;
+  [ "$KEY" = "" -o "$KEY" = "${item}" ] && break;
+  [ "$VAL" = "" -o "$VAL" = "${item}" ] && break;
 
-    if [ "CONFIG" = "$KEY" ]; then
-        USR_CONFIG="$VAL";
-        continue;
-    fi
+  if [ "CONFIG" = "$KEY" ]; then
+    USR_CONFIG="$VAL";
+    continue;
+  fi
 
-    if [ "TESTING" = "$KEY" ]; then
-        __SKIP_ALL_MSG=true;
-        continue;
-    fi
+  if [ "TESTING" = "$KEY" ]; then
+    __SKIP_ALL_MSG=true;
+    continue;
+  fi
 done
 
 # If true, utils functions keep quiet
@@ -53,12 +53,12 @@ SKIP_ALL_MSG=$__SKIP_ALL_MSG;
 
 # Repo config not set, use the default of current working directory
 if [ "${USR_CONFIG}" = "" ]; then
-    USR_CONFIG=.sync-repo-info.sh
+  USR_CONFIG=.sync-repo-info.sh
 fi
 
 if [ ! -f "${USR_CONFIG}" ]; then
-    infoMsg "Usage: ${0##*/} [CONFIG=config] [TESTING=true]";
-    errMsg "Repo info config do not exits $(keyMsg ${PWD}/${USR_CONFIG})";
+  infoMsg "Usage: ${0##*/} [CONFIG=config] [TESTING=true]";
+  errMsg "Repo info config do not exits $(keyMsg ${PWD}/${USR_CONFIG})";
 fi
 
 # User configuration
@@ -70,7 +70,7 @@ USR_CONFIG=$(realpath -s ${USR_CONFIG}); # don't expand symlinks
 
 # Change to user repo directory
 if [ ! -d ${REPO_DIR} ]; then
-    errMsg "Do not exits repo $(keyMsg ${REPO_DIR})";
+  errMsg "Do not exits repo $(keyMsg ${REPO_DIR})";
 fi
 cd ${REPO_DIR}
 REPO_DIR=$(realpath -s ${REPO_DIR}); # don't expand symlinks
@@ -78,83 +78,83 @@ REPO_DIR=$(realpath -s ${REPO_DIR}); # don't expand symlinks
 # Checking is GIT or SVN
 VCS="$(getSupportedVCS $REPO_VCS)";
 [ "${VCS}" = "SVN" -a ! -d ${PWD}/.svn ] \
-    && errMsg "Repo is not $(keyMsg SVN)";
+  && errMsg "Repo is not $(keyMsg SVN)";
 [ "${VCS}" = "GIT" -a ! -d ${PWD}/.git ] \
-    && errMsg "Repo is not $(keyMsg GIT)";
+  && errMsg "Repo is not $(keyMsg GIT)";
 
 # Repo info file to sync
 if [ ! -f ${VS_VFILE} ]; then
-    errMsg "Do not exits repo info $(keyMsg ${VS_VFILE})";
+  errMsg "Do not exits repo info $(keyMsg ${VS_VFILE})";
 fi
 
 # The repo info & config file should be one file of the repo subdirectory
 fullPath=$(realpath -s ${VS_VFILE}); # don't expand symlinks
 isRepoFile=${fullPath#${REPO_DIR}/}; # remove '${REPO_DIR}/'
 if [ "${isRepoFile}" = "${fullPath}" ]; then
-    errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
-       $(keyMsg ${REPO_DIR})";
+  errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
+    $(keyMsg ${REPO_DIR})";
 fi
 VS_VFILE=${REPO_DIR}/${isRepoFile};
 
 fullPath=$(realpath -s ${USR_CONFIG}); # don't expand symlinks
 isRepoFile=${fullPath#${REPO_DIR}/}; # remove '${REPO_DIR}/'
 if [ "${isRepoFile}" = "${fullPath}" ]; then
-    errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
-       $(keyMsg ${REPO_DIR})";
+  errMsg "$(keyMsg ${VCS}): $(valMsg ${fullPath}) NOT in the repo
+    $(keyMsg ${REPO_DIR})";
 fi
 USR_CONFIG=${REPO_DIR}/${isRepoFile};
 
 # Get SVN repo info
 [ "${VCS}" = "SVN" ] && {
-    # REPO_URL=$(svn info | grep "Repository Root:" | awk '{ print $3; }')
-    REPO_URL=$(svn info | grep "URL:" | head -n 1 | awk '{ print $2; }')
-    REPO_HASH=$(svn info | grep "Revision:" | awk '{ print $2; }')
+  # REPO_URL=$(svn info | grep "Repository Root:" | awk '{ print $3; }')
+  REPO_URL=$(svn info | grep "URL:" | head -n 1 | awk '{ print $2; }')
+  REPO_HASH=$(svn info | grep "Revision:" | awk '{ print $2; }')
 
-    __REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }')
-    REPO_SUB_DIR=$(svn info | grep "Relative URL:" \
-        | awk 'sub(/\^\//,"",$3) sub(/\^\\/,"",$3) { print $3; }')
-    [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="$PWD"
-    SVN_SUB_HASH=$(svn info | grep "Last Changed Rev:" | awk '{ print $4; }')
+  __REPO_DIR=$(svn info | grep "Working Copy Root Path:" | awk '{ print $5; }')
+  REPO_SUB_DIR=$(svn info | grep "Relative URL:" \
+    | awk 'sub(/\^\//,"",$3) sub(/\^\\/,"",$3) { print $3; }')
+  [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="$PWD"
+  SVN_SUB_HASH=$(svn info | grep "Last Changed Rev:" | awk '{ print $4; }')
 
-    if [ "${REPO_HASH}" != "${SVN_SUB_HASH}" ]; then
-        REPO_HASH="${REPO_HASH}.${SVN_SUB_HASH}"
-    fi
+  if [ "${REPO_HASH}" != "${SVN_SUB_HASH}" ]; then
+    REPO_HASH="${REPO_HASH}.${SVN_SUB_HASH}"
+  fi
 
-    REPO_MODIFY_TIME=$(svn info | grep "Last Changed Date:" \
-        | awk '{ print $4, $5, $6; }')
+  REPO_MODIFY_TIME=$(svn info | grep "Last Changed Date:" \
+    | awk '{ print $4, $5, $6; }')
 
-    __USER_EMAIL="" # SVN should config by hand
-    SVN_LOGMSG=$(svn log)
-    SVN_LOGMSG=$(echo "${SVN_LOGMSG}" | head -n 2 | tail -n 1)
-    __USER_NAME=$(echo "${SVN_LOGMSG}" | awk -F'|' 'gsub(/ /,"",$2) { print $2; }')
-    [ "$__USER_NAME" = "(noauthor)" ] && __USER_NAME="";
+  __USER_EMAIL="" # SVN should config by hand
+  SVN_LOGMSG=$(svn log)
+  SVN_LOGMSG=$(echo "${SVN_LOGMSG}" | head -n 2 | tail -n 1)
+  __USER_NAME=$(echo "${SVN_LOGMSG}" | awk -F'|' 'gsub(/ /,"",$2) { print $2; }')
+  [ "$__USER_NAME" = "(noauthor)" ] && __USER_NAME="";
 }
 
 # Get GIT repo info
 [ "${VCS}" = "GIT" ] && {
-    __USER_NAME="$(git config user.name)"
-    __USER_EMAIL="$(git config user.email)"
+  __USER_NAME="$(git config user.name)"
+  __USER_EMAIL="$(git config user.email)"
 
-    if [ "$(git remote -v)" = "" ]; then
-        REPO_URL="" # remote url is not set
-    else
-        REPO_URL=$(git remote -v | head -n 1 | awk '{ print $2; }')
-    fi
+  if [ "$(git remote -v)" = "" ]; then
+    REPO_URL="" # remote url is not set
+  else
+    REPO_URL=$(git remote -v | head -n 1 | awk '{ print $2; }')
+  fi
 
-    REPO_SUB_DIR="$PWD"
-    __REPO_DIR=$(git rev-parse --show-toplevel)
-    REPO_SUB_DIR="${REPO_SUB_DIR##${__REPO_DIR}}"
-    [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="${__REPO_DIR}"
+  REPO_SUB_DIR="$PWD"
+  __REPO_DIR=$(git rev-parse --show-toplevel)
+  REPO_SUB_DIR="${REPO_SUB_DIR##${__REPO_DIR}}"
+  [ -z "${REPO_SUB_DIR}" ] && REPO_SUB_DIR="${__REPO_DIR}"
 
-    REPO_HASH=$(git log --oneline -1 | awk '{ print $1; }')
-    REPO_MODIFY_TIME=$(git log -1 --date=iso8601 | grep "Date:" \
-        | awk '{ print $2, $3, $4; }')
+  REPO_HASH=$(git log --oneline -1 | awk '{ print $1; }')
+  REPO_MODIFY_TIME=$(git log -1 --date=iso8601 | grep "Date:" \
+    | awk '{ print $2, $3, $4; }')
 }
 
 [ "${__REPO_DIR}" != "${REPO_DIR}" ] \
-    && errMsg "Repo directory not equal
-    USER: $(valMsg ${REPO_DIR})
-    AUTO: $(keyMsg ${__REPO_DIR})"
+  && errMsg "Repo directory not equal
+  USER: $(valMsg ${REPO_DIR})
+  AUTO: $(keyMsg ${__REPO_DIR})"
 
 # If not defined, then use the value auto detected, otherwise just use it
 isDefined="$(echo ${USER_NAME-NotDefine})"
@@ -169,13 +169,13 @@ HOST_OSNV="$(getHostOSNV)";
 BUILD_TIME="$(getBuildTime)";
 
 if [ "${USER_NAME}" != "" -a "${USER_EMAIL}" != "" ]; then
-    BUILD_USER="${USER_NAME} <${USER_EMAIL}>";
+  BUILD_USER="${USER_NAME} <${USER_EMAIL}>";
 elif [ "${USER_NAME}" != "" -a "${USER_EMAIL}" = "" ]; then
-    BUILD_USER="${USER_NAME}";
+  BUILD_USER="${USER_NAME}";
 elif [ "${USER_NAME}" = "" -a "${USER_EMAIL}" != "" ]; then
-    BUILD_USER="${USER_EMAIL}";
+  BUILD_USER="${USER_EMAIL}";
 else
-    BUILD_USER="";
+  BUILD_USER="";
 fi
 
 REPO_NAME=$(basename ${REPO_DIR});
@@ -201,29 +201,29 @@ infoMsg "----------------------------------------------------------------";
 #   (   =>  \(
 # space =>  \s+
 _VS_REPO_URL_=$(echo "${VS_REPO_URL}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 _VS_REPO_HASH_=$(echo "${VS_REPO_HASH}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 
 _VS_MODIFY_TIME_=$(echo "${VS_MODIFY_TIME}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 
 _VS_BUILD_USER_=$(echo "${VS_BUILD_USER}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 _VS_BUILD_TIME_=$(echo "${VS_BUILD_TIME}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 
 _VS_HOST_NAME_=$(echo "${VS_HOST_NAME}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 _VS_HOST_USER_=$(echo "${VS_HOST_USER}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 _VS_HOST_OSNV_=$(echo "${VS_HOST_OSNV}" \
-    | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
+  | awk -F';' 'sub(/\(/,"\(",$1) gsub(/ /,"\s+",$1) gsub(/\*/,"\*",$1) gsub(/\[/,"\[",$1) gsub(/\]/,"\]",$1) { print $1; }');
 
 # RegExp Pattern: URL
 _REPO_URL_=$(echo "${REPO_URL}" \
-    | awk 'gsub(/\\/,"\\\\\\",$1) gsub(/\//,"\/",$1) gsub(/\./,"\.",$1) \
-           gsub(/\-/,"\-",$1) gsub(/\:/,"\:",$1) { print $1; }');
+  | awk 'gsub(/\\/,"\\\\\\",$1) gsub(/\//,"\/",$1) gsub(/\./,"\.",$1) \
+         gsub(/\-/,"\-",$1) gsub(/\:/,"\:",$1) { print $1; }');
 URL_A="((http:\/\/)|(https:\/\/)|(svn:\/\/)|(git@))"
 URL_B="[0-9A-Za-z_@:\\\\\/\.-]+"
 REGEXP_REPO_URL="^(${_VS_REPO_URL_}\s+\\\")(${URL_A}${URL_B})(\\\"\s*.*)$";

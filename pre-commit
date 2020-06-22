@@ -40,15 +40,15 @@ POLICY_DIR="${THIS_DIR}/policy"
 source "${POLICY_DIR}/utils.sh"
 
 if git rev-parse --verify HEAD >/dev/null 2>&1; then
-    against=HEAD
+  against=HEAD
 else
-    # Initial commit, the empty tree sha1
-    against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+  # Initial commit, the empty tree sha1
+  against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
 fi
 
 if [ "${against}" != "HEAD" ]; then
-    # This is init commit
-    exit 0
+  # This is init commit
+  exit 0
 fi
 
 # check non-ASCII filenames & whitespace errors

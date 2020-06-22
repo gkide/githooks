@@ -21,7 +21,7 @@ source ${THIS_DIR}/utils.sh;
 
 REPO_DIR=$(git rev-parse --show-toplevel);
 AUTO_TAG=$(standard-release -x -c -r 2>/dev/null \
-    | head -n 1 | awk -F':' 'gsub(/[ ]/,"",$2) { print $2; }');
+  | head -n 1 | awk -F':' 'gsub(/[ ]/,"",$2) { print $2; }');
 
 infoMsg "----------------------------------------";
 infoMsgL "Release semver [$(valMsg ${AUTO_TAG})]: ";
@@ -30,7 +30,7 @@ read -p "" usrInput;
 [ -n "${usrInput}" ] && SEMVER_TAG="${usrInput}";
 
 if ! $(standard-release -x --is-semver "${SEMVER_TAG}"); then
-    errMsg "Invalid release semver($(valMsg ${SEMVER_TAG}))";
+  errMsg "Invalid release semver($(valMsg ${SEMVER_TAG}))";
 fi
 
 SYNC_SEMVER=${REPO_DIR}/scripts/sync-release;
@@ -64,25 +64,25 @@ infoMsg "----------------------------------------";
 infoMsgL "Show diff $(valMsg CHANGELOG.md) & $(valMsg SemVer) (y/n) [n]: ";
 read -p "" usrInput;
 if isYes "${usrInput}"; then
-    git diff ${SYNC_SEMVER};
-    git diff ${SYNC_REPO_INFO};
-    git diff ${REPO_DIR}/CHANGELOG.md;
+  git diff ${SYNC_SEMVER};
+  git diff ${SYNC_REPO_INFO};
+  git diff ${REPO_DIR}/CHANGELOG.md;
 fi
 
 infoMsg "----------------------------------------";
 infoMsgL "Confirm $(valMsg GIT) commit & tag (y/n) [n]: ";
 read -p "" usrInput;
 if isNo "${usrInput}"; then
-    errMsg "Release stop, confirm with $(keyMsg y) or $(keyMsg Y)";
+  errMsg "Release stop, confirm with $(keyMsg y) or $(keyMsg Y)";
 fi
 
 if isYes "${usrInput}"; then
-    git add ${SYNC_SEMVER};
-    git add ${SYNC_REPO_INFO};
-    git add ${REPO_DIR}/CHANGELOG.md;
+  git add ${SYNC_SEMVER};
+  git add ${SYNC_REPO_INFO};
+  git add ${REPO_DIR}/CHANGELOG.md;
 
-    # Do release commit
-    git commit --signoff -m "${COMMIT_MSG}";
-    # Do release tag
-    git tag --sign -a "${SEMVER_TAG}" -m "${TAG_MSG}";
+  # Do release commit
+  git commit --signoff -m "${COMMIT_MSG}";
+  # Do release tag
+  git tag --sign -a "${SEMVER_TAG}" -m "${TAG_MSG}";
 fi
