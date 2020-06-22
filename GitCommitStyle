@@ -6,9 +6,9 @@
 # <HERE-SHOULD-BE-ONE-BLANK-LINE>
 # <optional-footer>
 # ------------------------------------------------------------------------------
-# major, break, security, deprecated        Any incompatible changes
-# minor, feat, feature                      Backwards-compatible manner changes
-# patch, bugfix, fix,                       Any bug fixes
+# major, break, security, deprecated      Any incompatible changes
+# minor, feat, feature                    Backwards-compatible manner changes
+# patch, bugfix, fix,                     Any bug fixes
 #
 # perf              Code changes that improves the performance
 # revert            Revert to a previous commit
@@ -22,9 +22,11 @@
 # style     Changes that do not affect the code meaning
 # chore     Other changes that don't modify src or test files
 # skip      Skip commit style checking for some reason.
-#
 # ------------------------------------------------------------------------------
-# [CLOSE]               short description for the closed issue
-# [KNOWN ISSUE]         short description contains the known issue
-# [BREAKING CHANGES]    short description for the breaking changes
+# [CLOSE]                 description for closed issue
+# [CLOSE#XXX]             description for closed issue
+# [KNOWN ISSUE]           description for known issue
+# [KNOWN ISSUE#XXX]       description for known issue
+# [BREAKING CHANGES]      description for breaking changes
+# [BREAKING CHANGES#XXX]  description for breaking changes
 # ------------------------------------------------------------------------------
